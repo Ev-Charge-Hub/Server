@@ -33,12 +33,10 @@ func main() {
 	}
 
 	routes.SetupRoutes(router, userHandler, stationHandler)
-
+	printRegisteredRoutes(router)
 	port := ":8080"
 	fmt.Printf("Server is running on http://localhost%s\n", port)
 	router.Run(port)
-	printRegisteredRoutes(router)
-
 }
 
 func printRegisteredRoutes(router *gin.Engine) {
