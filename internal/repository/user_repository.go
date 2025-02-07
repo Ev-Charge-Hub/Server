@@ -4,21 +4,30 @@ import (
 	domainModels "Ev-Charge-Hub/Server/internal/domain/models"   // สำหรับ Domain Model
 	repoModels "Ev-Charge-Hub/Server/internal/repository/models" // ตรวจสอบ path
 	"context"
+	"errors"
+
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type UserRepository interface {
-	FindByUsernameOrEmail(ctx context.Context, usernameOrEmail string) (*domainModels.User, error)
-	CreateUser(ctx context.Context, user *domainModels.User) error
+type UserRepositoryInterface interface {
+	FindByUsernameOrEmail(ctx context.Context, usernameOrEmail string) (*domainModels.UserModel, error)
+	CreateUser(ctx context.Context, user *domainModels.UserModel) error
 }
 
+// Define Class userRepository
 type userRepository struct {
 	collection *mongo.Collection
 }
 
+// Comfirm Protocal -> UserRepository
+func NewUserRepository(db *mongo.Database) UserRepositoryInterface {
+	return &userRepository{collection: db.Collection("users")} // return pointer for pass by reference
+}
+
 // FindByUsernameOrEmail implements UserRepository.
-func (u *userRepository) FindByUsernameOrEmail(ctx context.Context, usernameOrEmail string) (*domainModels.User, error) {
+func (u *userRepository) FindByUsernameOrEmail(ctx context.Context, usernameOrEmail string) (*domainModels.UserModel, error) {
 	var userDB repoModels.UserDB
 
 	filter := bson.M{
@@ -33,7 +42,7 @@ func (u *userRepository) FindByUsernameOrEmail(ctx context.Context, usernameOrEm
 		return nil, err
 	}
 
-	return &domainModels.User{
+	return &domainModels.UserModel{
 		ID:        userDB.ID.Hex(),
 		Username:  userDB.Username,
 		Email:     userDB.Email,
@@ -45,8 +54,13 @@ func (u *userRepository) FindByUsernameOrEmail(ctx context.Context, usernameOrEm
 }
 
 // CreateUser implements UserRepository.
-func (u *userRepository) CreateUser(ctx context.Context, user *domainModels.User) error {
+func (u *userRepository) CreateUser(ctx context.Context, user *domainModels.UserModel) error {
+	objectID, err := primitive.ObjectIDFromHex(user.ID)
+	if err != nil {
+		return errors.New("invalid object ID")
+	}
 	userDB := repoModels.UserDB{
+		ID:        objectID,
 		Username:  user.Username,
 		Email:     user.Email,
 		Password:  user.Password,
@@ -55,11 +69,6 @@ func (u *userRepository) CreateUser(ctx context.Context, user *domainModels.User
 		UpdatedAt: user.UpdatedAt,
 	}
 
-	_, err := u.collection.InsertOne(ctx, userDB)
+	_, err = u.collection.InsertOne(ctx, userDB)
 	return err
-}
-
-// Comfirm Protocal -> UserRepository
-func NewUserRepository(db *mongo.Database) UserRepository {
-	return &userRepository{collection: db.Collection("users")}
 }

@@ -1,16 +1,40 @@
 package main
 
 import (
+	"Ev-Charge-Hub/Server/configs"
+	"Ev-Charge-Hub/Server/internal/delivery/http/user"
+	"Ev-Charge-Hub/Server/internal/repository"
+	"Ev-Charge-Hub/Server/internal/usecase"
+	"Ev-Charge-Hub/Server/routes"
+	"fmt"
+	"log"
+
 	"github.com/gin-gonic/gin"
-	"os"
 )
 
 func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8000"
+	gin.SetMode(gin.ReleaseMode)
+	db := configs.ConnectDB()
+
+	// สร้าง Repository, Use Case และ Handler
+	userRepo := repository.NewUserRepository(db)
+	userUsecase := usecase.NewUserUsecase(userRepo)
+	userHandler := user.NewUserHandler(userUsecase)
+
+	// ตั้งค่า Routing
+	router := gin.Default()
+	err := router.SetTrustedProxies(nil)  // ไม่มี proxy
+	if err != nil {
+		log.Fatalf("Failed to set trusted proxies: %v", err)
 	}
 
-	router := gin.New()
-	router.Use(gin.Logger())
+	routes.SetupRoutes(router, userHandler)
+
+	port := ":8080"
+	fmt.Printf("Server is running on http://localhost%s\n", port)
+	fmt.Println("Available routes:")
+	fmt.Println("POST -> http://localhost:8080/users/register")
+	fmt.Println("POST -> http://localhost:8080/users/login")
+
+	router.Run(port)
 }
