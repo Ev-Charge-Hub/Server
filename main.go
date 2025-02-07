@@ -20,6 +20,11 @@ func main() {
 	userUsecase := usecase.NewUserUsecase(userRepo)
 	userHandler := http.NewUserHandler(userUsecase)
 
+	stationRepo := repository.NewEVStationRepository(db)
+	stationUsecase := usecase.NewEVStationUsecase(stationRepo)
+	stationHandler := http.NewEVStationHandler(stationUsecase)
+
+
 	// Set -> Routing
 	router := gin.Default()
 	err := router.SetTrustedProxies(nil) 
@@ -27,13 +32,17 @@ func main() {
 		log.Fatalf("Failed to set trusted proxies: %v", err)
 	}
 
-	routes.SetupRoutes(router, userHandler)
+	routes.SetupRoutes(router, userHandler, stationHandler)
 
 	port := ":8080"
 	fmt.Printf("Server is running on http://localhost%s\n", port)
-	fmt.Println("Available routes:")
-	fmt.Println("POST -> http://localhost:8080/users/register")
-	fmt.Println("POST -> http://localhost:8080/users/login")
-
 	router.Run(port)
+	printRegisteredRoutes(router)
+
+}
+
+func printRegisteredRoutes(router *gin.Engine) {
+	for _, route := range router.Routes() {
+		fmt.Printf("Registered route: %s %s\n", route.Method, route.Path)
+	}
 }
