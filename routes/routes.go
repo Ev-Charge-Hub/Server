@@ -1,12 +1,11 @@
 package routes
 
 import (
-	"Ev-Charge-Hub/Server/internal/delivery/http/user"
+	"Ev-Charge-Hub/Server/internal/delivery/http"
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes(router *gin.Engine, userHandler user.UserHandlerInterface) {
-	// กลุ่มเส้นทาง API สำหรับ User
+func SetupRoutes(router *gin.Engine, userHandler http.UserHandlerInterface) {
 	r := router.Group("/users")
 	r.POST("/register", userHandler.RegisterUser)
 	r.POST("/login", userHandler.LoginUser)

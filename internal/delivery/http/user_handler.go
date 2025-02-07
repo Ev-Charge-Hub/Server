@@ -1,19 +1,24 @@
-package user
+package http
 
 import (
-	"Ev-Charge-Hub/Server/dto/request"
+	"Ev-Charge-Hub/Server/internal/dto/request"
 	"Ev-Charge-Hub/Server/internal/usecase"
-	"github.com/gin-gonic/gin"
+
+	// "log"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator"
 )
 
-// UserHandlerInterface สำหรับการ Mock หรือเปลี่ยน Implementation
+var validate = validator.New()
+
 type UserHandlerInterface interface {
 	RegisterUser(c *gin.Context)
 	LoginUser(c *gin.Context)
 }
 
-// class userHandler
+// define class userHandler
 type userHandler struct {
 	userUsecase usecase.UserUsecaseInterface
 }
@@ -28,6 +33,11 @@ func (h *userHandler) RegisterUser(c *gin.Context) {
 	var req request.RegisterUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+	
+	if err := validate.Struct(req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
 		return
 	}
 
@@ -47,11 +57,16 @@ func (h *userHandler) LoginUser(c *gin.Context) {
 		return
 	}
 
+	if err := validate.Struct(req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
+		return
+	}
+
 	token, err := h.userUsecase.LoginUser(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token.Token})
+	c.JSON(http.StatusOK, gin.H{"token": token})
 }

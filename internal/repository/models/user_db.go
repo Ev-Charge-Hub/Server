@@ -16,4 +16,4 @@ type UserDB struct {
 }
 
 // json: key name when Post to client(ถูกแปลงเป็น JSON)
-// bson: key name when Get from DB(ถูกใช้เก็บหรือดึงข้อมูลจาก MongoDB)
+// bson: key name when Get from DB(ถูกใช้เก็บหรือดึงข้อมูลจาก MongoDB) bson:<key name of mongoDB>

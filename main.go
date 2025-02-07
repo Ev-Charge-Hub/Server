@@ -2,13 +2,12 @@ package main
 
 import (
 	"Ev-Charge-Hub/Server/configs"
-	"Ev-Charge-Hub/Server/internal/delivery/http/user"
+	"Ev-Charge-Hub/Server/internal/delivery/http"
 	"Ev-Charge-Hub/Server/internal/repository"
 	"Ev-Charge-Hub/Server/internal/usecase"
 	"Ev-Charge-Hub/Server/routes"
 	"fmt"
 	"log"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,14 +15,14 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	db := configs.ConnectDB()
 
-	// สร้าง Repository, Use Case และ Handler
+	// Init -> Repository, Use Case and Handler
 	userRepo := repository.NewUserRepository(db)
 	userUsecase := usecase.NewUserUsecase(userRepo)
-	userHandler := user.NewUserHandler(userUsecase)
+	userHandler := http.NewUserHandler(userUsecase)
 
-	// ตั้งค่า Routing
+	// Set -> Routing
 	router := gin.Default()
-	err := router.SetTrustedProxies(nil)  // ไม่มี proxy
+	err := router.SetTrustedProxies(nil) 
 	if err != nil {
 		log.Fatalf("Failed to set trusted proxies: %v", err)
 	}

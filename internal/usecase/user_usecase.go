@@ -1,8 +1,8 @@
 package usecase
 
 import (
-	"Ev-Charge-Hub/Server/dto/request"
-	"Ev-Charge-Hub/Server/dto/response"
+	"Ev-Charge-Hub/Server/internal/dto/request"
+	"Ev-Charge-Hub/Server/internal/dto/response"
 	"Ev-Charge-Hub/Server/internal/domain/models"
 	"Ev-Charge-Hub/Server/internal/repository"
 	"Ev-Charge-Hub/Server/utils"
@@ -13,7 +13,7 @@ import (
 )
 
 type UserUsecaseInterface interface {
-	RegisterUser(ctx context.Context, req request.RegisterUserRequest) error
+	RegisterUser(ctx context.Context, req request.RegisterUserRequest) (error)
 	LoginUser(ctx context.Context, req request.LoginRequest) (*response.LoginResponse, error)
 }
 
@@ -55,12 +55,11 @@ func (u *userUsecase) LoginUser(ctx context.Context, req request.LoginRequest) (
 		return nil, errors.New("invalid email or password")
 	}
 
-	// ตรวจสอบรหัสผ่าน
 	if !utils.ComparePassword(req.Password, user.Password) {
-		return nil, errors.New("invalid email or password")
+		return nil, errors.New("invalid email or password it wrong")
 	}
 
-	// สร้าง JWT Token
+	// Create JWT Token
 	token, err := utils.CreateToken(user.ID, user.Username)
 	if err != nil {
 		return nil, errors.New("failed to generate token")
