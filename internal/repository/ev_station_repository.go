@@ -11,7 +11,7 @@ import (
 )
 
 type EVStationRepository interface {
-	FindStations(ctx context.Context, company string, stationType string, search string) ([]models.EVStationDB, error)
+	FindStations(ctx context.Context, company string, stationType string, search string, plugName string) ([]models.EVStationDB, error)
 	FindAllStations(ctx context.Context) ([]models.EVStationDB, error)
 	FindStationByID(ctx context.Context, id string) (*models.EVStationDB, error)
 }
@@ -50,7 +50,7 @@ func NewEVStationRepository(db *mongo.Database) EVStationRepository {
 // 	return stations, nil
 // }
 
-func (repo *evStationRepository) FindStations(ctx context.Context, company string, stationType string, search string) ([]models.EVStationDB, error) {
+func (repo *evStationRepository) FindStations(ctx context.Context, company string, stationType string, search string, plugName string) ([]models.EVStationDB, error) {
 	filter := bson.M{}
 
 	// กรอง Company และ Search ตามปกติ
@@ -61,7 +61,7 @@ func (repo *evStationRepository) FindStations(ctx context.Context, company strin
 		filter["name"] = bson.M{"$regex": search, "$options": "i"}
 	}
 
-	// ดึงข้อมูล EV Stations ทั้งหมดที่ตรงกับ filter
+	// ดึงข้อมูล Ens ทั้งหมดที่ตรงกับ filterV Statio
 	cursor, err := repo.collection.Find(ctx, filter)
 	if err != nil {
 		return nil, err
@@ -72,10 +72,17 @@ func (repo *evStationRepository) FindStations(ctx context.Context, company strin
 		return nil, err
 	}
 
-	// กรอง Connectors ภายในแต่ละ Station
+	// map Connectors each Station (type)
 	if stationType != "" {
 		for i := range stations {
 			stations[i].Connectors = filterConnectorsByType(stations[i].Connectors, stationType)
+		}
+	}
+
+	// map Connectors each Station (plugName)
+	if plugName != "" {
+		for i := range stations {
+			stations[i].Connectors = filterConnectorsByPlugName(stations[i].Connectors, plugName)
 		}
 	}
 
@@ -113,7 +120,6 @@ func (repo *evStationRepository) FindStationByID(ctx context.Context, id string)
 func filterConnectorsByType(connectors []models.ConnectorDB, stationType string) []models.ConnectorDB {
 	var filtered []models.ConnectorDB
 
-	// แปลง stationType (string) เป็น ConnectorType
 	connectorType := constants.ConnectorType(stationType)
 
 	for _, connector := range connectors {
@@ -121,5 +127,38 @@ func filterConnectorsByType(connectors []models.ConnectorDB, stationType string)
 			filtered = append(filtered, connector)
 		}
 	}
+	return filtered
+}
+
+func filterConnectorsByPlugName(connectors []models.ConnectorDB, plugName string) []models.ConnectorDB {
+	var filtered []models.ConnectorDB
+
+	connectorPlugName := constants.PlugName(plugName)
+
+	for _, connector := range connectors {
+		if connector.PlugName == connectorPlugName {
+			filtered = append(filtered, connector)
+		}
+	}
+	return filtered
+}
+
+func filterConnectors(connectors []models.ConnectorDB, stationType constants.ConnectorType, typeName constants.PlugName) []models.ConnectorDB {
+	var filtered []models.ConnectorDB
+
+	for _, connector := range connectors {
+		// Filter by AC/DC type
+		if stationType != "" && connector.Type != stationType {
+			continue
+		}
+
+		// Filter by plug type (e.g., CHAdeMO, CCS Type 2)
+		if typeName != "" && connector.PlugName != typeName {
+			continue
+		}
+
+		filtered = append(filtered, connector)
+	}
+
 	return filtered
 }

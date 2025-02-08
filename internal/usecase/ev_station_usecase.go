@@ -23,7 +23,7 @@ func NewEVStationUsecase(repo repository.EVStationRepository) EVStationUsecase {
 }
 
 func (u *evStationUsecase) FilterStations(ctx context.Context, filter request.StationFilterRequest) ([]response.EVStationResponse, error) {
-	stations, err := u.stationRepo.FindStations(ctx, filter.Company, filter.Type, filter.Search)
+	stations, err := u.stationRepo.FindStations(ctx, filter.Company, filter.Type, filter.Search, filter.PlugName)
 	if err != nil {
 		return nil, err
 	}
@@ -53,8 +53,6 @@ func (u *evStationUsecase) GetStationByID(ctx context.Context, id string) (*resp
 	if err != nil {
 		return nil, err
 	}
-
-	// แปลงจาก DB Model ไปเป็น Response DTO
 	response := mapStationDBToResponse(*station)
 	return &response, nil
 }
@@ -63,21 +61,22 @@ func mapStationDBToResponse(station models.EVStationDB) response.EVStationRespon
 	var connectors []response.Connector
 	for _, c := range station.Connectors {
 		connectors = append(connectors, response.Connector{
-			ConnectorID:   c.ConnectorID,
-			Type:          c.Type,
-			PricePerUnit:  c.PricePerUnit,
-			PowerOutput:   c.PowerOutput,
-			IsAvailable:   c.IsAvailable,
+			ConnectorID:  c.ConnectorID,
+			Type:         c.Type,
+			PlugName:     c.PlugName,
+			PricePerUnit: c.PricePerUnit,
+			PowerOutput:  c.PowerOutput,
+			IsAvailable:  c.IsAvailable,
 		})
 	}
 
 	return response.EVStationResponse{
-		ID:         station.ID.Hex(),
-		StationID:  station.StationID,
-		Name:       station.Name,
-		Latitude:   station.Latitude,
-		Longitude:  station.Longitude,
-		Company:    station.Company,
+		ID:        station.ID.Hex(),
+		StationID: station.StationID,
+		Name:      station.Name,
+		Latitude:  station.Latitude,
+		Longitude: station.Longitude,
+		Company:   station.Company,
 		Status: response.StationStatus{
 			OpenHours:  station.Status.OpenHours,
 			CloseHours: station.Status.CloseHours,

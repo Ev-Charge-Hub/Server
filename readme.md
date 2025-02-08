@@ -29,8 +29,8 @@ Project/
 │   ├── delivery/             # HTTP Handlers (Controllers)
 │   ├── repository/           # Data access logic (MongoDB)
 │   ├── usecase/              # Business logic
-│   └── domain/               # Models for domain logic
-├── data/                     # DTOs (Data Transfer Objects)
+│   ├── domain/               # Models for domain logic
+│   └── dto/                  # DTOs (Data Transfer Objects)
 ├── routes/                   # API routes
 ├── utils/                    # Utility functions (JWT, encryption)
 └── main.go                   # Application entry point
@@ -42,8 +42,8 @@ Project/
 
 ### **1. Clone the repository**
 
-`git clone https://github.com/yourusername/ev-charge-hub.git
-cd ev-charge-hub`
+- `git clone https://github.com/yourusername/ev-charge-hub.git`
+- `cd ev-charge-hub`
 
 ### **2. Set up MongoDB**
 

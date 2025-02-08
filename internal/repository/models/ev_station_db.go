@@ -25,6 +25,7 @@ type StationStatusDB struct {
 type ConnectorDB struct {
 	ConnectorID   string                  `bson:"connector_id"`
 	Type          constants.ConnectorType `bson:"type"`
+	PlugName	  constants.PlugName  	  `bson:"plug_name"`
 	PricePerUnit  float64                 `bson:"price_per_unit"`
 	PowerOutput   int                     `bson:"power_output"`
 	IsAvailable   bool                    `bson:"is_available"`

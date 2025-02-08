@@ -20,9 +20,10 @@ type StationStatus struct {
 }
 
 type Connector struct {
-	ConnectorID   string                  `json:"connector_id"`
-	Type          constants.ConnectorType `json:"type"`
-	PricePerUnit  float64                 `json:"price_per_unit"`
-	PowerOutput   int                     `json:"power_output"`
-	IsAvailable   bool                    `json:"is_available"`
+	ConnectorID  string                  `json:"connector_id"`
+	Type         constants.ConnectorType `json:"type"`
+	PlugName     constants.PlugName      `json:"plug_name"`
+	PricePerUnit float64                 `json:"price_per_unit"`
+	PowerOutput  int                     `json:"power_output"`
+	IsAvailable  bool                    `json:"is_available"`
 }

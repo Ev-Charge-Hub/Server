@@ -22,6 +22,7 @@ type StationStatus struct {
 type Connector struct {
 	ConnectorID   string
 	Type          constants.ConnectorType
+	PlugName	  constants.PlugName
 	PricePerUnit  float64
 	PowerOutput   int
 	IsAvailable   bool

@@ -1,7 +1,8 @@
 package request
 
 type StationFilterRequest struct {
-	Company string `form:"company"`
-	Type    string `form:"type"`
-	Search  string `form:"search"`
+	Company  string `form:"company"`
+	Type     string `form:"type"`
+	PlugName string `form:"plug_name"`
+	Search   string `form:"search"`
 }
