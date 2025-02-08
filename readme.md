@@ -32,6 +32,7 @@ Project/
 │   ├── usecase/              # Business logic
 │   ├── domain/               # Models for domain logic
 │   └── dto/                  # DTOs (Data Transfer Objects)
+├── middleware                # Middleware layer for verify before use restrict api
 ├── routes/                   # API routes
 ├── utils/                    # Utility functions (JWT, encryption)
 └── main.go                   # Application entry point
