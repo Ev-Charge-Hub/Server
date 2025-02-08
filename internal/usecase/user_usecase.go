@@ -60,7 +60,7 @@ func (u *userUsecase) LoginUser(ctx context.Context, req request.LoginRequest) (
 	}
 
 	// Create JWT Token
-	token, err := utils.CreateToken(user.ID, user.Username)
+	token, err := utils.CreateToken(user.ID, user.Username,user.Role)
 	if err != nil {
 		return nil, errors.New("failed to generate token")
 	}
