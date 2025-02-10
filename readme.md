@@ -157,7 +157,8 @@ Server will start at:
       "connectors": [
         {
           "connector_id": "C001",
-          "type": "Type2",
+          "type": "DC",
+          "plug_name": "type 2"
           "price_per_unit": 3.5,
           "power_output": 22.0,
           "is_available": true
@@ -198,6 +199,7 @@ Server will start at:
         {
           "connector_id": "C001",
           "type": "AC",
+          "plug_name": "type 2"
           "price_per_unit": 3.5,
           "power_output": 22.0,
           "is_available": true
@@ -220,6 +222,7 @@ Server will start at:
           {
               "connector_id": "CT0690",
               "type": "DC",
+              "plug_name": "tesla plug"
               "price_per_unit": 6.6,
               "power_output": 100,
               "is_available": true
@@ -234,6 +237,7 @@ Server will start at:
           {
               "connector_id": "CT0692",
               "type": "DC",
+              "plug_name": "type 2"
               "price_per_unit": 7.2,
               "power_output": 150,
               "is_available": true
@@ -272,7 +276,8 @@ Server will start at:
     "connectors": [
       {
         "connector_id": "C001",
-        "type": "Type2",
+        "type": "AC",
+        "plug_name": "type 2"
         "price_per_unit": 3.5,
         "power_output": 22.0,
         "is_available": true
