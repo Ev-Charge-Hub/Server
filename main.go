@@ -8,6 +8,8 @@ import (
 	"Ev-Charge-Hub/Server/routes"
 	"fmt"
 	"log"
+
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,6 +29,14 @@ func main() {
 
 	// Set -> Routing
 	router := gin.Default()
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"}, // Allow all origins (Change this for security)
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Authorization", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
+
 	err := router.SetTrustedProxies(nil) 
 	if err != nil {
 		log.Fatalf("Failed to set trusted proxies: %v", err)

@@ -4,6 +4,8 @@ go 1.23.3
 
 require go.mongodb.org/mongo-driver v1.17.2
 
+require github.com/gin-contrib/cors v1.7.3 // indirect
+
 require (
 	github.com/bytedance/sonic v1.12.8 // indirect
 	github.com/bytedance/sonic/loader v0.2.3 // indirect
