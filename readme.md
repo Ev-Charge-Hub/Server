@@ -14,6 +14,7 @@ This project is a backend system for managing EV charging stations. It allows us
 This project follows **Clean Architecture** principles, which promote separation of concerns, maintainability, testability, and scalability of the system.
 
 ### **Clean Architecture Layers**
+![image](https://github.com/user-attachments/assets/9ba3d515-64e1-4fa2-aaf2-b443a9c526f3)
 
 1. **Delivery Layer (Controllers/Handlers):** Handles incoming HTTP requests, processes input, and returns responses.
 2. **Use Case Layer (Business Logic):** Contains application-specific business rules and orchestrates the interaction between repository and response.
