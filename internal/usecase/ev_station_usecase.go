@@ -6,6 +6,7 @@ import (
 	"Ev-Charge-Hub/Server/internal/repository"
 	"Ev-Charge-Hub/Server/internal/repository/models"
 	"context"
+	"fmt"
 )
 
 type EVStationUsecase interface {
@@ -23,7 +24,23 @@ func NewEVStationUsecase(repo repository.EVStationRepository) EVStationUsecase {
 }
 
 func (u *evStationUsecase) FilterStations(ctx context.Context, filter request.StationFilterRequest) ([]response.EVStationResponse, error) {
-	stations, err := u.stationRepo.FindStations(ctx, filter.Company, filter.Type, filter.Search, filter.PlugName)
+	var isOpen *bool
+
+	// Convert status string to boolean
+    if filter.Status != "" {
+        switch filter.Status {
+        case "open":
+            isOpen = new(bool)
+            *isOpen = true
+        case "closed":
+            isOpen = new(bool)
+            *isOpen = false
+        default:
+            return nil, fmt.Errorf("invalid status value: %s", filter.Status)
+        }
+    }
+	
+	stations, err := u.stationRepo.FindStations(ctx, filter.Company, filter.Type, filter.Search, filter.PlugName, isOpen)
 	if err != nil {
 		return nil, err
 	}

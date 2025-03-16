@@ -11,9 +11,12 @@ import (
 )
 
 type EVStationRepository interface {
-	FindStations(ctx context.Context, company string, stationType string, search string, plugName string) ([]models.EVStationDB, error)
+    FindStations(ctx context.Context, company string, stationType string, search string, plugName string, isOpen *bool) ([]models.EVStationDB, error)
 	FindAllStations(ctx context.Context) ([]models.EVStationDB, error)
 	FindStationByID(ctx context.Context, id string) (*models.EVStationDB, error)
+	// CreateStation(ctx context.Context, station models.EVStationDB)
+	// EditStation(ctx context.Context, id string , station models.EVStationDB)
+	// RemoveStation(ctx context.Context,id string)
 }
 
 type evStationRepository struct {
@@ -24,35 +27,15 @@ func NewEVStationRepository(db *mongo.Database) EVStationRepository {
 	return &evStationRepository{collection: db.Collection("ev_station")}
 }
 
-// func (repo *evStationRepository) FindStations(ctx context.Context, company string, stationType string, search string) ([]models.EVStationDB, error) {
-// 	filter := bson.M{}
-
-// 	if company != "" {
-// 		filter["company"] = company
-// 	}
-// 	if stationType != "" {
-// 		filter["connectors.type"] = stationType
-// 	}
-// 	if search != "" {
-// 		filter["name"] = bson.M{"$regex": search, "$options": "i"} // ค้นหาด้วยชื่อที่คล้ายกัน
-// 	}
-
-// 	cursor, err := repo.collection.Find(ctx, filter)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	var stations []models.EVStationDB
-// 	if err = cursor.All(ctx, &stations); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return stations, nil
-// }
-
-func (repo *evStationRepository) FindStations(ctx context.Context, company string, stationType string, search string, plugName string) ([]models.EVStationDB, error) {
+func (repo *evStationRepository) FindStations(
+    ctx context.Context, 
+    company string, 
+    stationType string, 
+    search string, 
+    plugName string,
+    isOpen *bool,
+) ([]models.EVStationDB, error) {	
 	filter := bson.M{}
-
 	// กรอง Company และ Search ตามปกติ
 	if company != "" {
 		filter["company"] = company
@@ -61,7 +44,11 @@ func (repo *evStationRepository) FindStations(ctx context.Context, company strin
 		filter["name"] = bson.M{"$regex": search, "$options": "i"}
 	}
 
-	// ดึงข้อมูล Ens ทั้งหมดที่ตรงกับ filterV Statio
+	if isOpen != nil {
+		filter["status.is_open"] = *isOpen
+	}
+
+	// ดึงข้อมูล Ens ทั้งหมดที่ตรงกับ filterV Station
 	cursor, err := repo.collection.Find(ctx, filter)
 	if err != nil {
 		return nil, err
@@ -140,25 +127,5 @@ func filterConnectorsByPlugName(connectors []models.ConnectorDB, plugName string
 			filtered = append(filtered, connector)
 		}
 	}
-	return filtered
-}
-
-func filterConnectors(connectors []models.ConnectorDB, stationType constants.ConnectorType, typeName constants.PlugName) []models.ConnectorDB {
-	var filtered []models.ConnectorDB
-
-	for _, connector := range connectors {
-		// Filter by AC/DC type
-		if stationType != "" && connector.Type != stationType {
-			continue
-		}
-
-		// Filter by plug type (e.g., CHAdeMO, CCS Type 2)
-		if typeName != "" && connector.PlugName != typeName {
-			continue
-		}
-
-		filtered = append(filtered, connector)
-	}
-
 	return filtered
 }

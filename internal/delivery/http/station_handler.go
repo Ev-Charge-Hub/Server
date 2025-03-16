@@ -18,6 +18,8 @@ func NewEVStationHandler(usecase usecase.EVStationUsecase) *EVStationHandler {
 
 func (h *EVStationHandler) FilterStations(c *gin.Context) {
 	var filterRequest request.StationFilterRequest
+	
+	// Query and save data from parameter
 	if err := c.ShouldBindQuery(&filterRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
