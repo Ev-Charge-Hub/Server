@@ -174,6 +174,7 @@ Server will start at:
   * `company`: Filter by company name (option)
   * `type`: Filter by connector type (option)
   * `search`: Search by station name (option)
+  * `plug_name`: Filter by plug name (optional)
 * Example
   * `GET /stations/filter?company=Caltex EV&type=AC&search=สถานีชาร์จรถยนต์ไฟฟ้า เซ็นทรัลเวิลด์`
 
