@@ -5,6 +5,7 @@ import (
 	"Ev-Charge-Hub/Server/internal/repository/models"
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,6 +20,7 @@ type EVStationRepository interface {
 	CreateStation(ctx context.Context, station models.EVStationDB) error
 	EditStation(ctx context.Context, id string, station models.EVStationDB) error
 	RemoveStation(ctx context.Context, id string) error
+	SetBooking(ctx context.Context, id string, booking models.BookingDB) error
 }
 
 type evStationRepository struct {
@@ -146,6 +148,35 @@ func (repo *evStationRepository) RemoveStation(ctx context.Context, id string) e
 	}
 
 	return err
+}
+// SetBooking เพิ่มข้อมูลการจองให้กับสถานีชาร์จไฟฟ้า
+func (repo *evStationRepository) SetBooking(ctx context.Context, id string, booking models.BookingDB) error {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return fmt.Errorf("invalid station ID")
+	}
+
+	filter := bson.M{
+		"_id":          objectID,
+		"connectors.0": bson.M{"$exists": true}, // Ensure connectors array exists
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"connectors.0.booking": booking, // Set booking for the first connector
+		},
+	}
+
+	result, err := repo.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return fmt.Errorf("station or connector not found")
+	}
+
+	return nil
 }
 
 // 🔍 Utility Function - Filter Connectors by Type

@@ -7,6 +7,7 @@ import (
 	"Ev-Charge-Hub/Server/internal/repository/models"
 	"context"
 	"fmt"
+	"time"
 )
 
 type EVStationUsecase interface {
@@ -16,6 +17,7 @@ type EVStationUsecase interface {
 	CreateStation(ctx context.Context, station models.EVStationDB) error
 	EditStation(ctx context.Context, id string, station models.EVStationDB) error
 	RemoveStation(ctx context.Context, id string) error
+	SetBooking(ctx context.Context, booking request.SetBookingRequest) error
 }
 
 // Create Class
@@ -91,20 +93,35 @@ func (u *evStationUsecase) RemoveStation(ctx context.Context, id string) error {
 	return u.stationRepo.RemoveStation(ctx, id)
 }
 
+func (u *evStationUsecase) SetBooking(ctx context.Context, booking request.SetBookingRequest) error {
+	// Validate Date Format
+	_, err := time.Parse("2006-01-02T15:04:05", booking.BookingEndTime)
+	if err != nil {
+		return fmt.Errorf("invalid booking_end_time format")
+	}
+
+	bookingDB := models.BookingDB{
+		Username:       booking.Username,
+		BookingEndTime: booking.BookingEndTime,
+	}
+
+	return u.stationRepo.SetBooking(ctx, booking.ID, bookingDB)
+}
+
 func mapStationDBToResponse(station models.EVStationDB) response.EVStationResponse {
-	var connectors []response.Connector
+	var connectors []response.ConnectorResponse
 	for _, c := range station.Connectors {
-		var booking *response.Booking = nil
+		var booking *response.BookingResponse = nil
 
 		// ตรวจสอบว่ามี Booking อยู่หรือไม่
 		if c.Booking != nil {
-			booking = &response.Booking{
+			booking = &response.BookingResponse{
 				Username:       c.Booking.Username,
 				BookingEndTime: c.Booking.BookingEndTime,
 			}
 		}
 
-		connectors = append(connectors, response.Connector{
+		connectors = append(connectors, response.ConnectorResponse{
 			ConnectorID:  c.ConnectorID,
 			Type:         c.Type,
 			PlugName:     c.PlugName,
