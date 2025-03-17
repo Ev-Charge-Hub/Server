@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    image: rew1234/ev-charge-hub-server:V1.0  # Use your Docker Hub image
+    container_name: ev_charge_hub
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "${CLIENT_PORT}:8080"
+    networks:
+      - ev_network
+
+networks:
+  ev_network:
+    driver: bridge
