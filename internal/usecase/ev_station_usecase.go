@@ -13,12 +13,17 @@ type EVStationUsecase interface {
 	FilterStations(ctx context.Context, filter request.StationFilterRequest) ([]response.EVStationResponse, error)
 	ShowAllStations(ctx context.Context) ([]response.EVStationResponse, error)
 	GetStationByID(ctx context.Context, id string) (*response.EVStationResponse, error)
+	CreateStation(ctx context.Context, station models.EVStationDB) error
+	EditStation(ctx context.Context, id string, station models.EVStationDB) error
+	RemoveStation(ctx context.Context, id string) error
 }
 
+// Create Class
 type evStationUsecase struct {
 	stationRepo repository.EVStationRepository
 }
 
+// Init class && imprement EVStationUsecase interface
 func NewEVStationUsecase(repo repository.EVStationRepository) EVStationUsecase {
 	return &evStationUsecase{stationRepo: repo}
 }
@@ -27,19 +32,19 @@ func (u *evStationUsecase) FilterStations(ctx context.Context, filter request.St
 	var isOpen *bool
 
 	// Convert status string to boolean
-    if filter.Status != "" {
-        switch filter.Status {
-        case "open":
-            isOpen = new(bool)
-            *isOpen = true
-        case "closed":
-            isOpen = new(bool)
-            *isOpen = false
-        default:
-            return nil, fmt.Errorf("invalid status value: %s", filter.Status)
-        }
-    }
-	
+	if filter.Status != "" {
+		switch filter.Status {
+		case "open":
+			isOpen = new(bool)
+			*isOpen = true
+		case "closed":
+			isOpen = new(bool)
+			*isOpen = false
+		default:
+			return nil, fmt.Errorf("invalid status value: %s", filter.Status)
+		}
+	}
+
 	stations, err := u.stationRepo.FindStations(ctx, filter.Company, filter.Type, filter.Search, filter.PlugName, isOpen)
 	if err != nil {
 		return nil, err
@@ -74,16 +79,38 @@ func (u *evStationUsecase) GetStationByID(ctx context.Context, id string) (*resp
 	return &response, nil
 }
 
+func (u *evStationUsecase) CreateStation(ctx context.Context, station models.EVStationDB) error {
+	return u.stationRepo.CreateStation(ctx, station)
+}
+
+func (u *evStationUsecase) EditStation(ctx context.Context, id string, station models.EVStationDB) error {
+	return u.stationRepo.EditStation(ctx, id, station)
+}
+
+func (u *evStationUsecase) RemoveStation(ctx context.Context, id string) error {
+	return u.stationRepo.RemoveStation(ctx, id)
+}
+
 func mapStationDBToResponse(station models.EVStationDB) response.EVStationResponse {
 	var connectors []response.Connector
 	for _, c := range station.Connectors {
+		var booking *response.Booking = nil
+
+		// ตรวจสอบว่ามี Booking อยู่หรือไม่
+		if c.Booking != nil {
+			booking = &response.Booking{
+				Username:       c.Booking.Username,
+				BookingEndTime: c.Booking.BookingEndTime,
+			}
+		}
+
 		connectors = append(connectors, response.Connector{
 			ConnectorID:  c.ConnectorID,
 			Type:         c.Type,
 			PlugName:     c.PlugName,
 			PricePerUnit: c.PricePerUnit,
 			PowerOutput:  c.PowerOutput,
-			IsAvailable:  c.IsAvailable,
+			Booking:      booking,
 		})
 	}
 

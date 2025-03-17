@@ -21,9 +21,14 @@ type StationStatus struct {
 
 type Connector struct {
 	ConnectorID  string                  `json:"connector_id"`
-	Type         constants.ConnectorType `json:"type"`
-	PlugName     constants.PlugName      `json:"plug_name"`
-	PricePerUnit float64                 `json:"price_per_unit"`
-	PowerOutput  int                     `json:"power_output"`
-	IsAvailable  bool                    `json:"is_available"`
+	Type          constants.ConnectorType `json:"type"`
+	PlugName      constants.PlugName       `json:"plug_name"`
+	PricePerUnit  float64                 `json:"price_per_unit"`
+	PowerOutput   int                     `json:"power_output"`
+	Booking       *Booking                `json:"booking"` // 👈 ใช้ Pointer
+}
+
+type Booking struct {
+	Username       string `json:"username"`
+	BookingEndTime string `json:"booking_end_time"`
 }

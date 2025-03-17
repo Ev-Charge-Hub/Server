@@ -1,6 +1,9 @@
 package models
 
-import "Ev-Charge-Hub/Server/internal/constants"
+import (
+	"Ev-Charge-Hub/Server/internal/constants"
+	"time"
+)
 
 type EVStation struct {
 	ID         string
@@ -25,5 +28,10 @@ type Connector struct {
 	PlugName	  constants.PlugName
 	PricePerUnit  float64
 	PowerOutput   int
-	IsAvailable   bool
+	Booking       *Booking
+}
+
+type Booking struct {
+	Username       string
+	BookingEndTime time.Time 
 }

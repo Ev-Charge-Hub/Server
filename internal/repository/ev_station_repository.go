@@ -4,6 +4,8 @@ import (
 	"Ev-Charge-Hub/Server/internal/constants"
 	"Ev-Charge-Hub/Server/internal/repository/models"
 	"context"
+	"errors"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -11,12 +13,12 @@ import (
 )
 
 type EVStationRepository interface {
-    FindStations(ctx context.Context, company string, stationType string, search string, plugName string, isOpen *bool) ([]models.EVStationDB, error)
+	FindStations(ctx context.Context, company string, stationType string, search string, plugName string, isOpen *bool) ([]models.EVStationDB, error)
 	FindAllStations(ctx context.Context) ([]models.EVStationDB, error)
 	FindStationByID(ctx context.Context, id string) (*models.EVStationDB, error)
-	// CreateStation(ctx context.Context, station models.EVStationDB)
-	// EditStation(ctx context.Context, id string , station models.EVStationDB)
-	// RemoveStation(ctx context.Context,id string)
+	CreateStation(ctx context.Context, station models.EVStationDB) error
+	EditStation(ctx context.Context, id string, station models.EVStationDB) error
+	RemoveStation(ctx context.Context, id string) error
 }
 
 type evStationRepository struct {
@@ -28,13 +30,13 @@ func NewEVStationRepository(db *mongo.Database) EVStationRepository {
 }
 
 func (repo *evStationRepository) FindStations(
-    ctx context.Context, 
-    company string, 
-    stationType string, 
-    search string, 
-    plugName string,
-    isOpen *bool,
-) ([]models.EVStationDB, error) {	
+	ctx context.Context,
+	company string,
+	stationType string,
+	search string,
+	plugName string,
+	isOpen *bool,
+) ([]models.EVStationDB, error) {
 	filter := bson.M{}
 	// กรอง Company และ Search ตามปกติ
 	if company != "" {
@@ -104,6 +106,49 @@ func (repo *evStationRepository) FindStationByID(ctx context.Context, id string)
 	return &station, nil
 }
 
+// 🟢 Create New Station
+func (repo *evStationRepository) CreateStation(ctx context.Context, station models.EVStationDB) error {
+	station.ID = primitive.NewObjectID() // Only Generate New ID, No Timestamps Added
+	_, err := repo.collection.InsertOne(ctx, station)
+	return err
+}
+
+// 🟡 Edit Station Details
+func (repo *evStationRepository) EditStation(ctx context.Context, id string, station models.EVStationDB) error {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	result, err := repo.collection.UpdateOne(
+		ctx,
+		bson.M{"_id": objectID},
+		bson.M{"$set": station},
+	)
+
+	if result.MatchedCount == 0 {
+		return errors.New("station not found")
+	}
+
+	return err
+}
+
+// 🔴 Remove Station
+func (repo *evStationRepository) RemoveStation(ctx context.Context, id string) error {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	result, err := repo.collection.DeleteOne(ctx, bson.M{"_id": objectID})
+	if result.DeletedCount == 0 {
+		return errors.New("station not found")
+	}
+
+	return err
+}
+
+// 🔍 Utility Function - Filter Connectors by Type
 func filterConnectorsByType(connectors []models.ConnectorDB, stationType string) []models.ConnectorDB {
 	var filtered []models.ConnectorDB
 
@@ -111,12 +156,17 @@ func filterConnectorsByType(connectors []models.ConnectorDB, stationType string)
 
 	for _, connector := range connectors {
 		if connector.Type == connectorType {
+			// Auto-clear expired bookings
+			if connector.Booking != nil && isBookingExpired(connector.Booking.BookingEndTime) {
+				connector.Booking = nil // เคลียร์การจองที่หมดอายุโดยการตั้งค่าเป็น nil
+			}
 			filtered = append(filtered, connector)
 		}
 	}
 	return filtered
 }
 
+// 🔍 Utility Function - Filter Connectors by Plug Name
 func filterConnectorsByPlugName(connectors []models.ConnectorDB, plugName string) []models.ConnectorDB {
 	var filtered []models.ConnectorDB
 
@@ -124,8 +174,23 @@ func filterConnectorsByPlugName(connectors []models.ConnectorDB, plugName string
 
 	for _, connector := range connectors {
 		if connector.PlugName == connectorPlugName {
+			// Auto-clear expired bookings
+			if connector.Booking != nil && isBookingExpired(connector.Booking.BookingEndTime) {
+				connector.Booking = nil // เคลียร์การจองที่หมดอายุโดยการตั้งค่าเป็น nil
+			}
 			filtered = append(filtered, connector)
 		}
 	}
 	return filtered
+}
+
+// 🔍 Booking Expiry Check Function
+func isBookingExpired(bookingEndTime string) bool {
+	// Convert string time to `time.Time`
+	parsedTime, err := time.Parse("2006-01-02T15:04:05", bookingEndTime)
+	if err != nil {
+		return true // ถ้าแปลงเวลาไม่ได้ ให้ถือว่าหมดอายุ
+	}
+
+	return time.Now().After(parsedTime)
 }
