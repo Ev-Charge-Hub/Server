@@ -87,3 +87,7 @@ Temporary Items
 .apdisk
 arch.txt
 note.txt
+.env
+node_modules
+*.log
+.git

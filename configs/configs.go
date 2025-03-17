@@ -3,19 +3,28 @@ package configs
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// ConnectDB เชื่อมต่อกับ MongoDB และคืนค่า Database Object
 func ConnectDB() *mongo.Database {
 	// กำหนด URI ของ MongoDB
-	mongoURI := "mongodb+srv://setthanan50:Admin1234@ev-charge-hub-db.lgqxg.mongodb.net/"
 
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Failed to load .env file: %v", err)
+	}
+	mongoURI := os.Getenv("MONGO_URI")
+
+	if mongoURI == "" {
+		log.Fatalf("MONGO_URI is not set in .env")
+	}
 	// ตั้งค่า Timeout สำหรับการเชื่อมต่อ
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
 
 	// สร้างและเชื่อมต่อ MongoDB Client

@@ -8,12 +8,20 @@ import (
 	"Ev-Charge-Hub/Server/routes"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	_ = godotenv.Load()
+	port := ":"+os.Getenv("CLIENT_PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	gin.SetMode(gin.ReleaseMode)
 	db := configs.ConnectDB()
 
@@ -26,7 +34,6 @@ func main() {
 	stationUsecase := usecase.NewEVStationUsecase(stationRepo)
 	stationHandler := http.NewEVStationHandler(stationUsecase)
 
-
 	// Set -> Routing
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
@@ -37,14 +44,13 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	err := router.SetTrustedProxies(nil) 
+	err := router.SetTrustedProxies(nil)
 	if err != nil {
 		log.Fatalf("Failed to set trusted proxies: %v", err)
 	}
 
 	routes.SetupRoutes(router, userHandler, stationHandler)
 	printRegisteredRoutes(router)
-	port := ":8080"
 	fmt.Printf("Server is running on http://localhost%s\n", port)
 	router.Run(port)
 }

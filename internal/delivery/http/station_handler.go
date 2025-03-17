@@ -62,13 +62,13 @@ func (h *EVStationHandler) GetStationByID(c *gin.Context) {
 func (h *EVStationHandler) SetBooking(c *gin.Context) {
 	var bookingReq request.SetBookingRequest
 
-	// 🟠 Log Request Data เพื่อเช็คข้อมูลก่อนเช็ค Validation
+	// Log Request Data เพื่อเช็คข้อมูลก่อนเช็ค Validation
 	if err := c.ShouldBindJSON(&bookingReq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	// 🔄 Call Usecase
+	//  Call Usecase
 	err := h.stationUsecase.SetBooking(c.Request.Context(), bookingReq)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

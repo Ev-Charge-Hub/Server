@@ -1,12 +1,19 @@
 package utils
 
 import (
+	"os"
 	"time"
+
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/joho/godotenv"
 )
 
-var jwtSecret = []byte("your_jwt_secret")
+var jwtSecret []byte
 
+func init() {
+	_ = godotenv.Load()
+	jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+}
 type Claims struct {
 	UserID   string `json:"user_id"`
 	Username string `json:"username"`

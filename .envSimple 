@@ -1,0 +1,2 @@
+MONGO_URI=mongodb+srv://setthanan50:Admin1234@ev-charge-hub-db.lgqxg.mongodb.net/
+JWT_SECRET=supersecretkey
