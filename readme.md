@@ -283,6 +283,34 @@ Server will start at:
   }
 ```
 
+#### 
+
+#### 📋 **SetBooking**
+
+* **URL:** `PUT /stations/set-booking`
+* **Body:**
+```
+  {
+    "connector_id": "CT0010",
+    "username": "note",
+    "booking_end_time": "2025-04-20T15:00:00"
+}
+```
+* Example
+  * `GET /stations/63f5a01c8f7e3f65b4c9d6b1`
+
+
+* **Response:**
+
+```
+{
+    "message": "Booking successfully added"
+}
+```
+
+
+
+
 ---
 
 ## 🔐 **JWT Authentication**

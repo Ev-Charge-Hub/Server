@@ -21,6 +21,7 @@ type EVStationRepository interface {
 	EditStation(ctx context.Context, id string, station models.EVStationDB) error
 	RemoveStation(ctx context.Context, id string) error
 	SetBooking(ctx context.Context, id string, booking models.BookingDB) error
+	// FindStationByConnectorID(ctx context.Context, connectorID string) (*models.EVStationDB, error)
 }
 
 type evStationRepository struct {
@@ -149,35 +150,111 @@ func (repo *evStationRepository) RemoveStation(ctx context.Context, id string) e
 
 	return err
 }
-// SetBooking เพิ่มข้อมูลการจองให้กับสถานีชาร์จไฟฟ้า
-func (repo *evStationRepository) SetBooking(ctx context.Context, id string, booking models.BookingDB) error {
-	objectID, err := primitive.ObjectIDFromHex(id)
+
+func (repo *evStationRepository) SetBooking(ctx context.Context, connector_id string, booking models.BookingDB) error {
+	cursor, err := repo.collection.Find(ctx, bson.M{})
 	if err != nil {
-		return fmt.Errorf("invalid station ID")
+		return fmt.Errorf("failed to find stations: %v", err)
 	}
 
-	filter := bson.M{
-		"_id":          objectID,
-		"connectors.0": bson.M{"$exists": true}, // Ensure connectors array exists
+	var stations []models.EVStationDB
+	if err := cursor.All(ctx, &stations); err != nil {
+		return fmt.Errorf("failed to iterate over stations: %v", err)
 	}
 
-	update := bson.M{
-		"$set": bson.M{
-			"connectors.0.booking": booking, // Set booking for the first connector
-		},
+	connectorFound := false
+
+	for _, station := range stations {
+		for i, connector := range station.Connectors {
+			if connector.ConnectorID == connector_id {
+				// Found the connector, update booking
+				station.Connectors[i].Booking = &booking
+
+				filter := bson.M{
+					"_id":                     station.ID,
+					"connectors.connector_id": connector_id,
+				}
+
+				update := bson.M{
+					"$set": bson.M{
+						"connectors.$.booking": booking,
+					},
+				}
+
+				// Update the station in the database
+				result, err := repo.collection.UpdateOne(ctx, filter, update)
+				if err != nil {
+					return fmt.Errorf("failed to update booking: %v", err)
+				}
+
+				// Check if the connector was matched and updated
+				if result.MatchedCount == 0 {
+					return fmt.Errorf("no matching connector found to update booking")
+				}
+
+				// Mark that we have found the connector
+				connectorFound = true
+				break
+			}
+		}
+		if connectorFound {
+			break
+		}
 	}
 
-	result, err := repo.collection.UpdateOne(ctx, filter, update)
-	if err != nil {
-		return err
-	}
-
-	if result.MatchedCount == 0 {
-		return fmt.Errorf("station or connector not found")
+	// If connector id was not found in any of the stations
+	if !connectorFound {
+		return fmt.Errorf("connector id %s not found", connector_id)
 	}
 
 	return nil
 }
+
+// func (repo *evStationRepository) SetBooking(ctx context.Context, connector_id string, booking models.BookingDB) error {
+// 	// สร้าง filter เพื่อหาสถานีที่มี connector_id ตรงกัน
+// 	filter := bson.M{
+// 		"connectors.connector_id": connector_id,
+// 	}
+
+// 	// สร้างข้อมูลที่จะอัปเดต (เพียงแค่ booking)
+// 	update := bson.M{
+// 		"$set": bson.M{
+// 			"connectors.$.booking": booking, // อัปเดตเฉพาะ booking ใน connector ที่ตรง
+// 		},
+// 	}
+
+// 	// ทำการอัปเดตใน MongoDB
+// 	result, err := repo.collection.UpdateOne(ctx, filter, update)
+// 	if err != nil {
+// 		return fmt.Errorf("ไม่สามารถอัปเดต booking ได้: %v", err)
+// 	}
+
+// 	// ตรวจสอบว่ามีการอัปเดตจริงหรือไม่
+// 	if result.MatchedCount == 0 {
+// 		return fmt.Errorf("ไม่พบ connector ที่มี ID %s", connector_id)
+// 	}
+
+// 	return nil
+// }
+
+// func (repo *evStationRepository) FindStationByConnectorID(ctx context.Context, connector_id string) (*models.EVStationDB, error) {
+// 	// ใช้ elemMatch เพื่อให้แม่นยำในการค้นหา
+// 	filter := bson.M{
+// 		"connectors.connector_id": connector_id,
+// 	}
+
+// 	var station models.EVStationDB
+// 	err := repo.collection.FindOne(ctx, filter).Decode(&station)
+// 	if err != nil {
+// 		if err == mongo.ErrNoDocuments {
+// 			return nil, fmt.Errorf("ไม่พบสถานีที่มี connector id %s", connector_id)
+// 		}
+// 		return nil, fmt.Errorf("เกิดข้อผิดพลาดขณะค้นหาสถานี: %v", err)
+// 	}
+
+// 	return &station, nil
+// }
+
 
 // 🔍 Utility Function - Filter Connectors by Type
 func filterConnectorsByType(connectors []models.ConnectorDB, stationType string) []models.ConnectorDB {

@@ -3,8 +3,6 @@ package http
 import (
 	"Ev-Charge-Hub/Server/internal/dto/request"
 	"Ev-Charge-Hub/Server/internal/usecase"
-
-	// "log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

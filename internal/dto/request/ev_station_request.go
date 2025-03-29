@@ -9,11 +9,11 @@ type EVStationRequest struct {
 	Latitude   float64            `json:"latitude" binding:"required"`
 	Longitude  float64            `json:"longitude" binding:"required"`
 	Company    string             `json:"company" binding:"required"`
-	Status     StationStatus      `json:"status" binding:"required"`
+	Status     StationStatusRequest      `json:"status" binding:"required"`
 	Connectors []ConnectorRequest `json:"connectors" binding:"required,dive"`
 }
 
-type StationStatus struct {
+type StationStatusRequest struct {
 	OpenHours  string `json:"open_hours" binding:"required"`
 	CloseHours string `json:"close_hours" binding:"required"`
 	IsOpen     bool   `json:"is_open" binding:"required"`

@@ -105,7 +105,7 @@ func (u *evStationUsecase) SetBooking(ctx context.Context, booking request.SetBo
 		BookingEndTime: booking.BookingEndTime,
 	}
 
-	return u.stationRepo.SetBooking(ctx, booking.ID, bookingDB)
+	return u.stationRepo.SetBooking(ctx, booking.ConnectorId, bookingDB)
 }
 
 func mapStationDBToResponse(station models.EVStationDB) response.EVStationResponse {

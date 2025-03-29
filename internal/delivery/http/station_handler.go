@@ -135,6 +135,18 @@ func (h *EVStationHandler) RemoveStation(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Station removed successfully"})
 }
 
+// func  (h *EVStationHandler) GetStationByConnectorID(c *gin.Context) {
+// 	connectorID := c.Param("connector_id")
+
+// 	station, err := h.stationUsecase.GetStationByConnectorID(c.Request.Context(), connectorID)
+// 	if err != nil {
+// 		c.JSON(http.StatusNotFound, gin.H{"error": "Station not found"})
+// 		return
+// 	}
+
+// 	c.JSON(http.StatusOK, station)
+// } 
+
 func mapRequestToModel(req request.EVStationRequest) models.EVStationDB {
 	var connectors []models.ConnectorDB
 	for _, c := range req.Connectors {
