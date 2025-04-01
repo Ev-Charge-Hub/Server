@@ -5,12 +5,12 @@ import (
 )
 
 type EVStationRequest struct {
-	Name       string             `json:"name" binding:"required"`
-	Latitude   float64            `json:"latitude" binding:"required"`
-	Longitude  float64            `json:"longitude" binding:"required"`
-	Company    string             `json:"company" binding:"required"`
-	Status     StationStatusRequest      `json:"status" binding:"required"`
-	Connectors []ConnectorRequest `json:"connectors" binding:"required,dive"`
+	Name       string               `json:"name" binding:"required"`
+	Latitude   float64              `json:"latitude" binding:"required"`
+	Longitude  float64              `json:"longitude" binding:"required"`
+	Company    string               `json:"company" binding:"required"`
+	Status     StationStatusRequest `json:"status" binding:"required"`
+	Connectors []ConnectorRequest   `json:"connectors" binding:"required,dive"`
 }
 
 type StationStatusRequest struct {
@@ -20,11 +20,11 @@ type StationStatusRequest struct {
 }
 
 type ConnectorRequest struct {
-	Type           constants.ConnectorType `json:"type" binding:"required"`
-	PlugName       constants.PlugName      `json:"plug_name" binding:"required"`
-	PricePerUnit   float64                 `json:"price_per_unit" binding:"required"`
-	PowerOutput    int                     `json:"power_output" binding:"required"`
-	Booking        *BookingRequest         `json:"booking"`
+	Type         constants.ConnectorType `json:"type" binding:"required"`
+	PlugName     constants.PlugName      `json:"plug_name" binding:"required"`
+	PricePerUnit float64                 `json:"price_per_unit" binding:"required"`
+	PowerOutput  int                     `json:"power_output" binding:"required"`
+	Booking      *BookingRequest         `json:"booking"`
 }
 
 type BookingRequest struct {

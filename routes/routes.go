@@ -21,5 +21,8 @@ func SetupRoutes(router *gin.Engine, userHandler http.UserHandlerInterface, stat
 		stationGroup.POST("/create", stationHandler.CreateStation)
 		stationGroup.PUT("/:id", stationHandler.EditStation)
 		stationGroup.DELETE("/:id", stationHandler.RemoveStation)
+		stationGroup.GET("/booking/:username", stationHandler.GetBookingByUserName)
+		stationGroup.GET("/bookings/:username", stationHandler.GetBookingsByUserName)	
+		stationGroup.GET("/connector/:connector_id", stationHandler.GetStationByConnectorID)
 	}
 }

@@ -18,6 +18,9 @@ type EVStationUsecase interface {
 	EditStation(ctx context.Context, id string, station models.EVStationDB) error
 	RemoveStation(ctx context.Context, id string) error
 	SetBooking(ctx context.Context, booking request.SetBookingRequest) error
+	GetBookingByUserName(ctx context.Context, username string) (*response.BookingResponse, error)
+	GetBookingsByUserName(ctx context.Context, username string) ([]response.BookingResponse, error)
+	GetStationByConnectorID(ctx context.Context, connectorID string) (*response.EVStationResponse, error)
 }
 
 // Create Class
@@ -93,19 +96,127 @@ func (u *evStationUsecase) RemoveStation(ctx context.Context, id string) error {
 	return u.stationRepo.RemoveStation(ctx, id)
 }
 
+// func (u *evStationUsecase) SetBooking(ctx context.Context, booking request.SetBookingRequest) error {
+// 	// Validate Date Format
+// 	_, err := time.Parse("2006-01-02T15:04:05", booking.BookingEndTime)
+// 	if err != nil {
+// 		return fmt.Errorf("invalid booking_end_time format")
+// 	}
+
+// 	bookingDB := models.BookingDB{
+// 		Username:       booking.Username,
+// 		BookingEndTime: booking.BookingEndTime,
+// 	}
+
+// 	haveBooking, err := u.stationRepo.FindBookingByUserName(ctx, booking.Username)
+
+// 	if err != nil {
+// 		return fmt.Errorf("error finding booking: %v", err)
+// 	}
+
+// 	// Check if the booking end time is in the past
+// 	if haveBooking != nil && haveBooking.BookingEndTime < time.Now().Format("2006-01-02T15:04:05") {
+// 		return fmt.Errorf("user already has a booking")
+// 	}
+
+// 	return u.stationRepo.SetBooking(ctx, booking.ConnectorId, bookingDB)
+// }
+
+func (u *evStationUsecase) GetStationByConnectorID(ctx context.Context, connectorID string) (*response.EVStationResponse, error) {
+	station, err := u.stationRepo.FindStationByConnectorID(ctx, connectorID)
+	if err != nil {
+		return nil, err
+	}
+	response := mapStationDBToResponse(*station)
+	return &response, nil
+}
+
 func (u *evStationUsecase) SetBooking(ctx context.Context, booking request.SetBookingRequest) error {
-	// Validate Date Format
+	// ✅ Validate booking_end_time format
 	_, err := time.Parse("2006-01-02T15:04:05", booking.BookingEndTime)
 	if err != nil {
 		return fmt.Errorf("invalid booking_end_time format")
 	}
 
+	// ✅ เช็กว่าผู้ใช้มี booking ซ้ำอยู่หรือไม่
+	bookings, err := u.stationRepo.FindBookingsByUserName(ctx, booking.Username)
+	if err == nil {
+		for _, b := range bookings {
+			expiredAt, err := time.Parse("2006-01-02T15:04:05", b.BookingEndTime)
+			if err != nil {
+				continue
+			}
+			if time.Now().Before(expiredAt) {
+				return fmt.Errorf("user already has an active booking until %s", b.BookingEndTime)
+			}
+		}
+	}
+
+	// ✅ เช็กว่า connector นี้ว่างไหม (ยังไม่มี booking หรือ booking หมดอายุแล้ว)
+	station, err := u.stationRepo.FindStationByConnectorID(ctx, booking.ConnectorId)
+	if err != nil {
+		return fmt.Errorf("error finding connector: %v", err)
+	}
+
+	connectorFound := false
+	for _, c := range station.Connectors {
+		if c.ConnectorID == booking.ConnectorId {
+			connectorFound = true
+			if c.Booking != nil {
+				expiredAt, err := time.Parse("2006-01-02T15:04:05", c.Booking.BookingEndTime)
+				if err == nil && time.Now().Before(expiredAt) {
+					return fmt.Errorf("connector is already booked until %s", c.Booking.BookingEndTime)
+				}
+			}
+			break
+		}
+	}
+
+	if !connectorFound {
+		return fmt.Errorf("connector not found")
+	}
+
+	// ✅ Create BookingDB object
 	bookingDB := models.BookingDB{
 		Username:       booking.Username,
 		BookingEndTime: booking.BookingEndTime,
 	}
 
+	// ✅ Save to repository
 	return u.stationRepo.SetBooking(ctx, booking.ConnectorId, bookingDB)
+}
+
+
+func (u *evStationUsecase) GetBookingByUserName(ctx context.Context, username string) (*response.BookingResponse, error) {
+	booking, err := u.stationRepo.FindBookingByUserName(ctx, username)
+	if err != nil {
+		return nil, err
+	}
+
+	// Map BookingDB to BookingResponse
+	response := &response.BookingResponse{
+		Username:       booking.Username,
+		BookingEndTime: booking.BookingEndTime,
+	}
+
+	return response, nil
+}
+
+func (u *evStationUsecase) GetBookingsByUserName(ctx context.Context, username string) ([]response.BookingResponse, error) {
+	bookings, err := u.stationRepo.FindBookingsByUserName(ctx, username)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []response.BookingResponse
+	for _, b := range bookings {
+		result = append(result, response.BookingResponse{
+			Username:       b.Username,
+			BookingEndTime: b.BookingEndTime,
+		})
+	}
+
+	return result, nil
 }
 
 func mapStationDBToResponse(station models.EVStationDB) response.EVStationResponse {
@@ -138,7 +249,7 @@ func mapStationDBToResponse(station models.EVStationDB) response.EVStationRespon
 		Latitude:  station.Latitude,
 		Longitude: station.Longitude,
 		Company:   station.Company,
-		Status: response.StationStatus{
+		Status: response.StationStatusResponse{
 			OpenHours:  station.Status.OpenHours,
 			CloseHours: station.Status.CloseHours,
 			IsOpen:     station.Status.IsOpen,

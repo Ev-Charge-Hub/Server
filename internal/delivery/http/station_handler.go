@@ -135,17 +135,50 @@ func (h *EVStationHandler) RemoveStation(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Station removed successfully"})
 }
 
-// func  (h *EVStationHandler) GetStationByConnectorID(c *gin.Context) {
-// 	connectorID := c.Param("connector_id")
+func (h *EVStationHandler) GetBookingByUserName(c *gin.Context) {
+	username := c.Param("username")
+	if username == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "username is required"})
+		return
+	}
 
-// 	station, err := h.stationUsecase.GetStationByConnectorID(c.Request.Context(), connectorID)
-// 	if err != nil {
-// 		c.JSON(http.StatusNotFound, gin.H{"error": "Station not found"})
-// 		return
-// 	}
+	booking, err := h.stationUsecase.GetBookingByUserName(c.Request.Context(), username)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
 
-// 	c.JSON(http.StatusOK, station)
-// } 
+	c.JSON(http.StatusOK, booking)
+}
+
+func (h *EVStationHandler) GetBookingsByUserName(c *gin.Context) {
+	username := c.Param("username")
+	if username == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "username is required"})
+		return
+	}
+
+	bookings, err := h.stationUsecase.GetBookingsByUserName(c.Request.Context(), username)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, bookings)
+}
+
+
+func  (h *EVStationHandler) GetStationByConnectorID(c *gin.Context) {
+	connectorID := c.Param("connector_id")
+
+	station, err := h.stationUsecase.GetStationByConnectorID(c.Request.Context(), connectorID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Station not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, station)
+} 
 
 func mapRequestToModel(req request.EVStationRequest) models.EVStationDB {
 	var connectors []models.ConnectorDB
