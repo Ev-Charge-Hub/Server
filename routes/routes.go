@@ -2,6 +2,8 @@ package routes
 
 import (
 	"Ev-Charge-Hub/Server/internal/delivery/http"
+	"Ev-Charge-Hub/Server/middleware"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,6 +16,7 @@ func SetupRoutes(router *gin.Engine, userHandler http.UserHandlerInterface, stat
 
 	stationGroup := router.Group("/stations")
 	{
+		stationGroup.Use(middleware.AuthMiddleware())
 		stationGroup.GET("/filter", stationHandler.FilterStations)
 		stationGroup.GET("/:id", stationHandler.GetStationByID)
 		stationGroup.PUT("/set-booking", stationHandler.SetBooking)
