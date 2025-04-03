@@ -1,25 +1,74 @@
 # **EV-Charge-Hub Backend API Documentation**
 
-## 📋 **Project Overview**
+## 📋 Project Overview
+EV-Charge-Hub is a backend system designed for managing electric vehicle (EV) charging stations. It enables user registration, station discovery, filtering by parameters and booking connectors. The system is built using the **Clean Architecture** design pattern for optimal maintainability and testability.
 
-This project is a backend system for managing EV charging stations. It allows users to:
+---
 
-* Register and log in
-* Retrieve details of all available EV stations
-* Filter stations by company, type, and search keyword
-* Retrieve a station by its unique ID
+## 🧩 What is Clean Architecture?
+Clean Architecture is a software design approach that separates the system into layers with clear boundaries and focuses on the **dependency inversion principle** — meaning that dependencies should always point inward toward the core business logic (domain). This architecture ensures that the core of the application is independent from frameworks, databases, and external tools.
 
-## **🏛️ Architecture: Clean Architecture**
+Benefits include:
+- Clear separation of concerns
+- Easier testing and maintenance
+- Flexibility in swapping infrastructure or delivery mechanisms
 
-This project follows **Clean Architecture** principles, which promote separation of concerns, maintainability, testability, and scalability of the system.
+---
+## 🧱 How It Works in This Project
+The system consists of four key layers that match the Clean Architecture diagram shown below:
 
-### **Clean Architecture Layers**
-![image](https://github.com/user-attachments/assets/9ba3d515-64e1-4fa2-aaf2-b443a9c526f3)
+![image](https://github.com/user-attachments/assets/3b81a4cd-b5f4-4655-9c5a-8e4085d5b952)
 
-1. **Delivery Layer (Controllers/Handlers):** Handles incoming HTTP requests, processes input, and returns responses.
-2. **Use Case Layer (Business Logic):** Contains application-specific business rules and orchestrates the interaction between repository and response.
-3. **Repository Layer (Data Access):** Interacts with external systems like databases or external APIs to store and retrieve data.
-4. **Domain Layer (Entities/Models):** Represents core business entities and models with minimal dependencies.
+
+### 🧠 1. Domain Layer (Core Business Logic)
+This is the heart of the system, containing all critical business rules and enterprise logic.
+- **Entity:** Models representing the business rules such as `Station`, `User`, `Booking`
+- **Domain Model:** Defines core attributes and relationships of business objects
+- 📁 Located at: `internal/domain/`
+
+### 📤 2. Application Layer (UseCase Layer)
+This layer orchestrates application-specific logic by invoking repositories and entities.
+- **UseCase:** Implements business workflows and logic such as booking a connector
+- Defines interfaces to be implemented by the repository layer
+- 📁 Located at: `internal/usecase/`
+
+### 📦 3. Data Layer (Infrastructure)
+This layer contains implementations of external systems, especially databases.
+- **Repository:** Implements the interfaces defined in the UseCase layer to access MongoDB
+- 📁 Located at: `internal/repository/`
+
+### 📬 4. Delivery Layer (Interface/Controllers)
+The outermost layer that interacts with the client via HTTP, gRPC, etc.
+- **Controller (Delivery):** Receives client requests, maps data to DTOs, and triggers UseCase logic
+- 📁 Located at: `internal/delivery/`
+
+---
+
+### 🧾 Additional Components
+
+- **DTO (Data Transfer Object):**
+  - Defines how data is passed between the client and the server (request/response format)
+  - 📁 Located at: `internal/dto/`
+
+- **Middleware:**
+  - Handles cross-cutting concerns like JWT authentication
+  - 📁 Located at: `middleware/`
+
+- **Utils:**
+  - Helper functions for encryption, token generation, formatting, etc.
+  - 📁 Located at: `utils/`
+
+- **Routes:**
+  - All route definitions and mapping to the appropriate handlers
+  - 📁 Located at: `routes/`
+
+- **Main Entry Point:**
+  - Application bootstrap logic, initializing dependencies and servers
+  - 📄 File: `main.go`
+
+---
+
+✅ This layered structure ensures the system is modular, testable, and easy to scale while following the principles of Clean Architecture.
 
 ## ⚙️ **Project Structure**
 
