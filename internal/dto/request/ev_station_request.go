@@ -31,3 +31,18 @@ type BookingRequest struct {
 	Username       string `json:"username" binding:"required"`
 	BookingEndTime string `json:"booking_end_time" binding:"required"`
 }
+
+type GetStationByUsernameRequest struct {
+	Username string `json:"username" binding:"required"`
+}
+
+type GetStationByConnectorIDRequest struct {
+	ConnectorId string `json:"connector_id" binding:"required"`
+}
+
+type CreateStationRequest struct {
+	ID string `json:"id" binding:"required"`
+}
+type RemoveStationRequest struct {
+	ID string `json:"id" binding:"required"`
+}

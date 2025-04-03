@@ -24,7 +24,7 @@ type EVStationRepository interface {
 	FindStationByConnectorID(ctx context.Context, connectorID string) (*models.EVStationDB, error)
 	FindBookingByUserName(ctx context.Context, userName string) (*models.BookingDB, error)
 	FindBookingsByUserName(ctx context.Context, username string) ([]models.BookingDB, error)
-
+	FindStationByUserName(ctx context.Context, userName string) (*models.EVStationDB, error)
 }
 
 type evStationRepository struct {
@@ -41,8 +41,7 @@ func (repo *evStationRepository) FindStations(
 	stationType string,
 	search string,
 	plugName string,
-	isOpen *bool,
-) ([]models.EVStationDB, error) {
+	isOpen *bool) ([]models.EVStationDB, error) {
 	filter := bson.M{}
 	// กรอง Company และ Search ตามปกติ
 	if company != "" {
@@ -112,14 +111,12 @@ func (repo *evStationRepository) FindStationByID(ctx context.Context, id string)
 	return &station, nil
 }
 
-// 🟢 Create New Station
 func (repo *evStationRepository) CreateStation(ctx context.Context, station models.EVStationDB) error {
 	station.ID = primitive.NewObjectID() // Only Generate New ID, No Timestamps Added
 	_, err := repo.collection.InsertOne(ctx, station)
 	return err
 }
 
-// 🟡 Edit Station Details
 func (repo *evStationRepository) EditStation(ctx context.Context, id string, station models.EVStationDB) error {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -139,7 +136,6 @@ func (repo *evStationRepository) EditStation(ctx context.Context, id string, sta
 	return err
 }
 
-// 🔴 Remove Station
 func (repo *evStationRepository) RemoveStation(ctx context.Context, id string) error {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -218,52 +214,47 @@ func (repo *evStationRepository) SetBooking(ctx context.Context, connector_id st
 // 	filter := bson.M{
 // 		"connectors.connector_id": connector_id,
 // 	}
-
+//
 // 	// สร้างข้อมูลที่จะอัปเดต (เพียงแค่ booking)
 // 	update := bson.M{
 // 		"$set": bson.M{
 // 			"connectors.$.booking": booking, // อัปเดตเฉพาะ booking ใน connector ที่ตรง
 // 		},
 // 	}
-
+//
 // 	// ทำการอัปเดตใน MongoDB
 // 	result, err := repo.collection.UpdateOne(ctx, filter, update)
 // 	if err != nil {
 // 		return fmt.Errorf("ไม่สามารถอัปเดต booking ได้: %v", err)
 // 	}
-
+//
 // 	// ตรวจสอบว่ามีการอัปเดตจริงหรือไม่
 // 	if result.MatchedCount == 0 {
 // 		return fmt.Errorf("ไม่พบ connector ที่มี ID %s", connector_id)
 // 	}
-
+//
 // 	return nil
 // }
 
-
 func (repo *evStationRepository) FindBookingByUserName(ctx context.Context, userName string) (*models.BookingDB, error) {
-    // Find any station whose connectors have a booking matching the given userName
-    filter := bson.M{"connectors.booking.username": userName}
+	filter := bson.M{"connectors.booking.username": userName}
 
-    var station models.EVStationDB
-    err := repo.collection.FindOne(ctx, filter).Decode(&station)
-    if err != nil {
-        if err == mongo.ErrNoDocuments {
+	var station models.EVStationDB
+	err := repo.collection.FindOne(ctx, filter).Decode(&station)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
 
+			return nil, fmt.Errorf("no booking found for user name %s", userName)
+		}
+		return nil, fmt.Errorf("error finding station: %v", err)
+	}
 
-            return nil, fmt.Errorf("no booking found for user name %s", userName)
-        }
-        return nil, fmt.Errorf("error finding station: %v", err)
-    }
-
-    // Once we have the station, scan its connectors to locate the correct booking
-    for _, connector := range station.Connectors {
-        if connector.Booking != nil && connector.Booking.Username == userName {
-            return connector.Booking, nil
-        }
-    }
-
-    return nil, fmt.Errorf("no booking found for user name %s", userName)
+	for _, connector := range station.Connectors {
+		if connector.Booking != nil && connector.Booking.Username == userName {
+			return connector.Booking, nil
+		}
+	}
+	return nil, fmt.Errorf("no booking found for user name %s", userName)
 }
 
 func (repo *evStationRepository) FindBookingsByUserName(ctx context.Context, username string) ([]models.BookingDB, error) {
@@ -319,15 +310,12 @@ func (repo *evStationRepository) FindStationByConnectorID(ctx context.Context, c
 	return &station, nil
 }
 
-
-
-
 // func (repo *evStationRepository) FindStationByConnectorID(ctx context.Context, connector_id string) (*models.EVStationDB, error) {
 // 	// ใช้ elemMatch เพื่อให้แม่นยำในการค้นหา
 // 	filter := bson.M{
 // 		"connectors.connector_id": connector_id,
 // 	}
-
+//
 // 	var station models.EVStationDB
 // 	err := repo.collection.FindOne(ctx, filter).Decode(&station)
 // 	if err != nil {
@@ -336,10 +324,33 @@ func (repo *evStationRepository) FindStationByConnectorID(ctx context.Context, c
 // 		}
 // 		return nil, fmt.Errorf("เกิดข้อผิดพลาดขณะค้นหาสถานี: %v", err)
 // 	}
-
+//
 // 	return &station, nil
 // }
 
+func (repo *evStationRepository) FindStationByUserName(ctx context.Context, userName string) (*models.EVStationDB, error) {
+	filter := bson.M{"connectors.booking.username": userName}
+
+	var station models.EVStationDB
+	err := repo.collection.FindOne(ctx, filter).Decode(&station)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf("no station found for user name %s", userName)
+		}
+		return nil, fmt.Errorf("error finding station: %v", err)
+	}
+
+	// กรองเฉพาะ connector ที่ user คนนี้จองไว้
+	var filteredConnectors []models.ConnectorDB
+	for _, c := range station.Connectors {
+		if c.Booking != nil && c.Booking.Username == userName {
+			filteredConnectors = append(filteredConnectors, c)
+		}
+	}
+	station.Connectors = filteredConnectors
+
+	return &station, nil
+}
 
 // 🔍 Utility Function - Filter Connectors by Type
 func filterConnectorsByType(connectors []models.ConnectorDB, stationType string) []models.ConnectorDB {

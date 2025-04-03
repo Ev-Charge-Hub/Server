@@ -14,14 +14,14 @@ type EVStationHandler struct {
 	stationUsecase usecase.EVStationUsecase
 }
 
-// Init Class 
+// Init Class
 func NewEVStationHandler(usecase usecase.EVStationUsecase) *EVStationHandler {
 	return &EVStationHandler{stationUsecase: usecase}
 }
 
 func (h *EVStationHandler) FilterStations(c *gin.Context) {
 	var filterRequest request.StationFilterRequest
-	
+
 	// Query and save data from parameter
 	if err := c.ShouldBindQuery(&filterRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -126,7 +126,7 @@ func (h *EVStationHandler) EditStation(c *gin.Context) {
 func (h *EVStationHandler) RemoveStation(c *gin.Context) {
 	id := c.Param("id")
 
-	err := h.stationUsecase.RemoveStation(c.Request.Context(), id)
+	err := h.stationUsecase.RemoveStation(c.Request.Context(), request.RemoveStationRequest{ID: id})
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Station not found"})
 		return
@@ -142,7 +142,7 @@ func (h *EVStationHandler) GetBookingByUserName(c *gin.Context) {
 		return
 	}
 
-	booking, err := h.stationUsecase.GetBookingByUserName(c.Request.Context(), username)
+	booking, err := h.stationUsecase.GetBookingByUserName(c.Request.Context(), request.GetBookingRequest{Username: username})
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -158,7 +158,7 @@ func (h *EVStationHandler) GetBookingsByUserName(c *gin.Context) {
 		return
 	}
 
-	bookings, err := h.stationUsecase.GetBookingsByUserName(c.Request.Context(), username)
+	bookings, err := h.stationUsecase.GetBookingsByUserName(c.Request.Context(), request.GetBookingsRequest{Username: username})
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -167,18 +167,34 @@ func (h *EVStationHandler) GetBookingsByUserName(c *gin.Context) {
 	c.JSON(http.StatusOK, bookings)
 }
 
-
-func  (h *EVStationHandler) GetStationByConnectorID(c *gin.Context) {
+func (h *EVStationHandler) GetStationByConnectorID(c *gin.Context) {
 	connectorID := c.Param("connector_id")
 
-	station, err := h.stationUsecase.GetStationByConnectorID(c.Request.Context(), connectorID)
+	station, err := h.stationUsecase.GetStationByConnectorID(c.Request.Context(), request.GetStationByConnectorIDRequest{ConnectorId: connectorID})
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Station not found"})
 		return
 	}
 
 	c.JSON(http.StatusOK, station)
-} 
+}
+
+func (h *EVStationHandler) GetStationByUserName(c *gin.Context) {
+	username := c.Param("username")
+	if username == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "username is required"})
+		return
+	}
+
+	station, err := h.stationUsecase.GetStationByUserName(c.Request.Context(), request.GetStationByUsernameRequest{Username: username})
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, station)
+}
+
 
 func mapRequestToModel(req request.EVStationRequest) models.EVStationDB {
 	var connectors []models.ConnectorDB
@@ -201,10 +217,10 @@ func mapRequestToModel(req request.EVStationRequest) models.EVStationDB {
 	}
 
 	return models.EVStationDB{
-		Name:       req.Name,
-		Latitude:   req.Latitude,
-		Longitude:  req.Longitude,
-		Company:    req.Company,
+		Name:      req.Name,
+		Latitude:  req.Latitude,
+		Longitude: req.Longitude,
+		Company:   req.Company,
 		Status: models.StationStatusDB{
 			OpenHours:  req.Status.OpenHours,
 			CloseHours: req.Status.CloseHours,
