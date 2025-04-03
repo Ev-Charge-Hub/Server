@@ -27,5 +27,6 @@ func SetupRoutes(router *gin.Engine, userHandler http.UserHandlerInterface, stat
 		stationGroup.GET("/booking/:username", stationHandler.GetBookingByUserName)
 		stationGroup.GET("/bookings/:username", stationHandler.GetBookingsByUserName)	
 		stationGroup.GET("/connector/:connector_id", stationHandler.GetStationByConnectorID)
+		stationGroup.GET("/username/:username", stationHandler.GetStationByUserName)
 	}
 }
