@@ -11,7 +11,7 @@ import (
 	"time"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
-
+//go:generate mockgen -source=user_usecase.go -destination=../mocks/mock_user_usecase.go -package=mocks
 type UserUsecaseInterface interface {
 	RegisterUser(ctx context.Context, req request.RegisterUserRequest) (error)
 	LoginUser(ctx context.Context, req request.LoginRequest) (*response.LoginResponse, error)

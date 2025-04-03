@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
-
+//go:generate mockery --name=UserRepositoryInterface --output=../../mocks --outpkg=mocks --with-expecter
 type UserRepositoryInterface interface {
 	FindByUsernameOrEmail(ctx context.Context, usernameOrEmail string) (*domainModels.UserModel, error)
 	CreateUser(ctx context.Context, user *domainModels.UserModel) error

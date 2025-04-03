@@ -2,7 +2,6 @@ package http
 
 import (
 	"Ev-Charge-Hub/Server/internal/dto/request"
-	"Ev-Charge-Hub/Server/internal/repository/models"
 	"Ev-Charge-Hub/Server/internal/usecase"
 	"net/http"
 
@@ -207,36 +206,3 @@ func (h *EVStationHandler) GetStationByUserName(c *gin.Context) {
 	c.JSON(http.StatusOK, station)
 }
 
-func mapRequestToModel(req request.EVStationRequest) models.EVStationDB {
-	var connectors []models.ConnectorDB
-	for _, c := range req.Connectors {
-		var booking *models.BookingDB
-		if c.Booking != nil {
-			booking = &models.BookingDB{
-				Username:       c.Booking.Username,
-				BookingEndTime: c.Booking.BookingEndTime,
-			}
-		}
-
-		connectors = append(connectors, models.ConnectorDB{
-			Type:         c.Type,
-			PlugName:     c.PlugName,
-			PricePerUnit: c.PricePerUnit,
-			PowerOutput:  c.PowerOutput,
-			Booking:      booking,
-		})
-	}
-
-	return models.EVStationDB{
-		Name:      req.Name,
-		Latitude:  req.Latitude,
-		Longitude: req.Longitude,
-		Company:   req.Company,
-		Status: models.StationStatusDB{
-			OpenHours:  req.Status.OpenHours,
-			CloseHours: req.Status.CloseHours,
-			IsOpen:     req.Status.IsOpen,
-		},
-		Connectors: connectors,
-	}
-}

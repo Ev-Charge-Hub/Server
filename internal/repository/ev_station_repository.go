@@ -13,7 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
-
+//go:generate mockgen -source=ev_station_repository.go -destination=../../mocks/mock_ev_repository.go -package=mocks
 type EVStationRepository interface {
 	FindStations(ctx context.Context, company string, stationType string, search string, plugName string, isOpen *bool) ([]models.EVStationDB, error)
 	FindAllStations(ctx context.Context) ([]models.EVStationDB, error)

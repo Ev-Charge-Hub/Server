@@ -12,7 +12,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
-
+//go:generate mockgen -source=ev_station_usecase.go -destination=../mocks/mock_ev_station_usecase.go -package=mocks
 type EVStationUsecase interface {
 	FilterStations(ctx context.Context, request request.StationFilterRequest) ([]response.EVStationResponse, error)
 	ShowAllStations(ctx context.Context) ([]response.EVStationResponse, error)
