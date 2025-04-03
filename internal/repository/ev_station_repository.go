@@ -408,7 +408,6 @@ func isBookingExpired(bookingEndTime string) bool {
 func mapDomainToDBModel(station domainModel.EVStation) models.EVStationDB {
 	return models.EVStationDB{
 		// ID:    primitive.ObjectID{}, // ถ้าใส่ว่างแล้วให้ Mongo gen
-		// StationID:  station.ID.Hex(), // หรืออาจจะเป็น station.ID ถ้าทำ Hex ไว้
 		Name:      station.Name,
 		Latitude:  station.Latitude,
 		Longitude: station.Longitude,

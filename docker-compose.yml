@@ -2,13 +2,56 @@ version: '3.8'
 
 services:
   app:
-    image: rew1234/ev-charge-hub-server:V1.0  # Use your Docker Hub image
+    image: rew1234/ev-charge-hub-server:V2.0
     container_name: ev_charge_hub
     restart: always
     env_file:
       - .env
     ports:
       - "${CLIENT_PORT}:8080"
+    networks:
+      - ev_network
+    labels:
+      - "logging=promtail"  # 💡 สำหรับ Promtail ใช้จัดการ log
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - ev_network
+
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - ev_network
+
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: promtail
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /etc/machine-id:/etc/machine-id
+      - ./promtail.yaml:/etc/promtail/promtail.yaml
+    command: -config.file=/etc/promtail/promtail.yaml
+    networks:
+      - ev_network
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
     networks:
       - ev_network
 

@@ -327,7 +327,6 @@ func mapStationDBToResponse(station models.EVStationDB) response.EVStationRespon
 
 	return response.EVStationResponse{
 		ID: station.ID.Hex(),
-		// StationID: station.StationID,
 		Name:      station.Name,
 		Latitude:  station.Latitude,
 		Longitude: station.Longitude,

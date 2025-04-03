@@ -6,7 +6,6 @@ import (
 
 type EVStationResponse struct {
 	ID         string                `json:"id"`
-	StationID  string                `json:"station_id"`
 	Name       string                `json:"name"`
 	Latitude   float64               `json:"latitude"`
 	Longitude  float64               `json:"longitude"`
