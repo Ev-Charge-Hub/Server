@@ -8,7 +8,6 @@ import (
 // EVStationDB represents the core domain model for EV Stations
 type EVStationDB struct {
 	ID         primitive.ObjectID `bson:"_id,omitempty"`
-	StationID  string             `bson:"station_id"`
 	Name       string             `bson:"name"`
 	Latitude   float64            `bson:"latitude"`
 	Longitude  float64            `bson:"longitude"`
@@ -26,12 +25,12 @@ type StationStatusDB struct {
 
 // ConnectorDB represents a charging connector within an EV Station
 type ConnectorDB struct {
-	ConnectorID    string                  `bson:"connector_id"`
-	Type           constants.ConnectorType `bson:"type"`
-	PlugName       constants.PlugName      `bson:"plug_name"`
-	PricePerUnit   float64                 `bson:"price_per_unit"`
-	PowerOutput    int                     `bson:"power_output"`
-	Booking        *BookingDB              `bson:"booking,omitempty"`
+	ConnectorID  string                  `bson:"connector_id"`
+	Type         constants.ConnectorType `bson:"type"`
+	PlugName     constants.PlugName      `bson:"plug_name"`
+	PricePerUnit float64                 `bson:"price_per_unit"`
+	PowerOutput  int                     `bson:"power_output"`
+	Booking      *BookingDB              `bson:"booking,omitempty"`
 }
 
 // BookingDB represents booking details for each connector

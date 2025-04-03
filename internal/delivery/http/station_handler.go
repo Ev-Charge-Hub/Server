@@ -50,7 +50,7 @@ func (h *EVStationHandler) ShowAllStations(c *gin.Context) {
 func (h *EVStationHandler) GetStationByID(c *gin.Context) {
 	id := c.Param("id")
 
-	station, err := h.stationUsecase.GetStationByID(c.Request.Context(), id)
+	station, err := h.stationUsecase.GetStationByID(c.Request.Context(), request.GetStationByIDRequest{ID: id})
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Station not found"})
 		return
@@ -79,23 +79,20 @@ func (h *EVStationHandler) SetBooking(c *gin.Context) {
 }
 
 func (h *EVStationHandler) CreateStation(c *gin.Context) {
-	var stationReq request.EVStationRequest
-	if err := c.ShouldBindJSON(&stationReq); err != nil {
+	var stationRequest request.EVStationRequest
+	if err := c.ShouldBindJSON(&stationRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid station data"})
 		return
 	}
 
-	// Validate the request
-	if err := validate.Struct(stationReq); err != nil {
+	// Validate request
+	if err := validate.Struct(stationRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
 		return
 	}
 
-	// Mapping Request to Model
-	stationModel := mapRequestToModel(stationReq)
-
-	err := h.stationUsecase.CreateStation(c.Request.Context(), stationModel)
-	if err != nil {
+	// ส่งต่อ request ไป Usecase เลย
+	if err := h.stationUsecase.CreateStation(c.Request.Context(), stationRequest); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -105,23 +102,38 @@ func (h *EVStationHandler) CreateStation(c *gin.Context) {
 
 func (h *EVStationHandler) EditStation(c *gin.Context) {
 	id := c.Param("id")
+
 	var stationReq request.EVStationRequest
 	if err := c.ShouldBindJSON(&stationReq); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid station data"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid station data",
+			"detail": err.Error(),
+		})
 		return
 	}
 
-	// Mapping Request to Model
-	stationModel := mapRequestToModel(stationReq)
+	editReq := request.EditStationRequest{
+		ID:         id,
+		Name:       &stationReq.Name,
+		Latitude:   &stationReq.Latitude,
+		Longitude:  &stationReq.Longitude,
+		Company:    &stationReq.Company,
+		Status:     &stationReq.Status,
+		Connectors: &stationReq.Connectors,
+	}
 
-	err := h.stationUsecase.EditStation(c.Request.Context(), id, stationModel)
+	updated, err := h.stationUsecase.EditStation(c.Request.Context(), editReq)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Station not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Station updated successfully"})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Station updated successfully",
+		"station": updated,
+	})
 }
+
 
 func (h *EVStationHandler) RemoveStation(c *gin.Context) {
 	id := c.Param("id")
@@ -194,7 +206,6 @@ func (h *EVStationHandler) GetStationByUserName(c *gin.Context) {
 
 	c.JSON(http.StatusOK, station)
 }
-
 
 func mapRequestToModel(req request.EVStationRequest) models.EVStationDB {
 	var connectors []models.ConnectorDB

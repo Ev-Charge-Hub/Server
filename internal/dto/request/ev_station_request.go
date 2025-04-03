@@ -40,9 +40,20 @@ type GetStationByConnectorIDRequest struct {
 	ConnectorId string `json:"connector_id" binding:"required"`
 }
 
-type CreateStationRequest struct {
+type GetStationByIDRequest struct {
 	ID string `json:"id" binding:"required"`
 }
+
+type EditStationRequest struct {
+	ID         string                `json:"id" binding:"required"`
+	Name       *string               `json:"name,omitempty"`
+	Latitude   *float64              `json:"latitude,omitempty"`
+	Longitude  *float64              `json:"longitude,omitempty"`
+	Company    *string               `json:"company,omitempty"`
+	Status     *StationStatusRequest `json:"status,omitempty"`
+	Connectors *[]ConnectorRequest   `json:"connectors,omitempty"`
+}
+
 type RemoveStationRequest struct {
 	ID string `json:"id" binding:"required"`
 }

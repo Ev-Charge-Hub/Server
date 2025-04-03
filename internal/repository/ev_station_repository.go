@@ -2,6 +2,7 @@ package repository
 
 import (
 	"Ev-Charge-Hub/Server/internal/constants"
+	domainModel "Ev-Charge-Hub/Server/internal/domain/models"
 	"Ev-Charge-Hub/Server/internal/repository/models"
 	"context"
 	"errors"
@@ -17,8 +18,8 @@ type EVStationRepository interface {
 	FindStations(ctx context.Context, company string, stationType string, search string, plugName string, isOpen *bool) ([]models.EVStationDB, error)
 	FindAllStations(ctx context.Context) ([]models.EVStationDB, error)
 	FindStationByID(ctx context.Context, id string) (*models.EVStationDB, error)
-	CreateStation(ctx context.Context, station models.EVStationDB) error
-	EditStation(ctx context.Context, id string, station models.EVStationDB) error
+	CreateStation(ctx context.Context, domainModel domainModel.EVStation) error
+	EditStation(ctx context.Context, domainModel domainModel.EVStation) error
 	RemoveStation(ctx context.Context, id string) error
 	SetBooking(ctx context.Context, id string, booking models.BookingDB) error
 	FindStationByConnectorID(ctx context.Context, connectorID string) (*models.EVStationDB, error)
@@ -111,29 +112,34 @@ func (repo *evStationRepository) FindStationByID(ctx context.Context, id string)
 	return &station, nil
 }
 
-func (repo *evStationRepository) CreateStation(ctx context.Context, station models.EVStationDB) error {
-	station.ID = primitive.NewObjectID() // Only Generate New ID, No Timestamps Added
-	_, err := repo.collection.InsertOne(ctx, station)
+func (repo *evStationRepository) CreateStation(ctx context.Context, station domainModel.EVStation) error {
+	dbModel := mapDomainToDBModel(station)
+
+	// ถ้าอยากใช้ Mongo สร้าง ID ก็ไม่ต้อง set เอง
+	// สามารถให้ dbModel.ID เป็นค่าว่าง แล้ว Mongo จะ generate ให้อัตโนมัติ
+	dbModel.ID = primitive.NewObjectID()
+
+	_, err := repo.collection.InsertOne(ctx, dbModel)
 	return err
 }
 
-func (repo *evStationRepository) EditStation(ctx context.Context, id string, station models.EVStationDB) error {
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return err
-	}
+func (repo *evStationRepository) EditStation(ctx context.Context, station domainModel.EVStation) error {
+	dbModel := mapDomainToDBModel(station)
+	dbModel.ID = station.ID
 
 	result, err := repo.collection.UpdateOne(
 		ctx,
-		bson.M{"_id": objectID},
-		bson.M{"$set": station},
+		bson.M{"_id": station.ID},
+		bson.M{"$set": dbModel},
 	)
 
+	if err != nil {
+		return err
+	}
 	if result.MatchedCount == 0 {
 		return errors.New("station not found")
 	}
-
-	return err
+	return nil
 }
 
 func (repo *evStationRepository) RemoveStation(ctx context.Context, id string) error {
@@ -397,4 +403,44 @@ func isBookingExpired(bookingEndTime string) bool {
 	}
 
 	return time.Now().After(parsedTime)
+}
+
+func mapDomainToDBModel(station domainModel.EVStation) models.EVStationDB {
+	return models.EVStationDB{
+		// ID:    primitive.ObjectID{}, // ถ้าใส่ว่างแล้วให้ Mongo gen
+		// StationID:  station.ID.Hex(), // หรืออาจจะเป็น station.ID ถ้าทำ Hex ไว้
+		Name:      station.Name,
+		Latitude:  station.Latitude,
+		Longitude: station.Longitude,
+		Company:   station.Company,
+		Status: models.StationStatusDB{
+			OpenHours:  station.Status.OpenHours,
+			CloseHours: station.Status.CloseHours,
+			IsOpen:     station.Status.IsOpen,
+		},
+		Connectors: mapConnectorsDomainToDB(station.Connectors),
+	}
+}
+
+func mapConnectorsDomainToDB(conns []domainModel.Connector) []models.ConnectorDB {
+	dbConns := make([]models.ConnectorDB, 0, len(conns))
+	for _, c := range conns {
+		var booking *models.BookingDB
+		if c.Booking != nil {
+			booking = &models.BookingDB{
+				Username:       c.Booking.Username,
+				BookingEndTime: c.Booking.BookingEndTime.Format(time.RFC3339), // ✅ แปลงเป็น string
+			}
+		}
+
+		dbConns = append(dbConns, models.ConnectorDB{
+			ConnectorID:  c.ConnectorID,
+			Type:         c.Type,
+			PlugName:     c.PlugName,
+			PricePerUnit: c.PricePerUnit,
+			PowerOutput:  c.PowerOutput,
+			Booking:      booking,
+		})
+	}
+	return dbConns
 }

@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	domainModel "Ev-Charge-Hub/Server/internal/domain/models"
 	"Ev-Charge-Hub/Server/internal/dto/request"
 	"Ev-Charge-Hub/Server/internal/dto/response"
 	"Ev-Charge-Hub/Server/internal/repository"
@@ -8,14 +9,16 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type EVStationUsecase interface {
 	FilterStations(ctx context.Context, request request.StationFilterRequest) ([]response.EVStationResponse, error)
 	ShowAllStations(ctx context.Context) ([]response.EVStationResponse, error)
-	GetStationByID(ctx context.Context, id string) (*response.EVStationResponse, error)
-	CreateStation(ctx context.Context, station models.EVStationDB) error
-	EditStation(ctx context.Context, id string, station models.EVStationDB) error
+	GetStationByID(ctx context.Context, request request.GetStationByIDRequest) (*response.EVStationResponse, error)
+	CreateStation(ctx context.Context, request request.EVStationRequest) error
+	EditStation(ctx context.Context, req request.EditStationRequest) (*response.EVStationResponse, error)
 	RemoveStation(ctx context.Context, request request.RemoveStationRequest) error
 	SetBooking(ctx context.Context, request request.SetBookingRequest) error
 	GetBookingByUserName(ctx context.Context, request request.GetBookingRequest) (*response.BookingResponse, error)
@@ -76,8 +79,8 @@ func (u *evStationUsecase) ShowAllStations(ctx context.Context) ([]response.EVSt
 	return stationResponses, nil
 }
 
-func (u *evStationUsecase) GetStationByID(ctx context.Context, id string) (*response.EVStationResponse, error) {
-	station, err := u.stationRepo.FindStationByID(ctx, id)
+func (u *evStationUsecase) GetStationByID(ctx context.Context, request request.GetStationByIDRequest) (*response.EVStationResponse, error) {
+	station, err := u.stationRepo.FindStationByID(ctx, request.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -85,12 +88,69 @@ func (u *evStationUsecase) GetStationByID(ctx context.Context, id string) (*resp
 	return &response, nil
 }
 
-func (u *evStationUsecase) CreateStation(ctx context.Context, station models.EVStationDB) error {
-	return u.stationRepo.CreateStation(ctx, station)
+func (u *evStationUsecase) CreateStation(ctx context.Context, req request.EVStationRequest) error {
+	// map Request -> Domain
+	stationDomain := mapRequestToDomain(req)
+
+	// สร้าง ID (หรือจะให้ DB สร้างเองก็ได้)
+	// ตัวอย่าง: stationDomain.ID = primitive.NewObjectID().Hex()
+
+	// เรียก Repository
+	if err := u.stationRepo.CreateStation(ctx, stationDomain); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (u *evStationUsecase) EditStation(ctx context.Context, id string, station models.EVStationDB) error {
-	return u.stationRepo.EditStation(ctx, id, station)
+func (u *evStationUsecase) EditStation(ctx context.Context, req request.EditStationRequest) (*response.EVStationResponse, error) {
+	objectID, err := primitive.ObjectIDFromHex(req.ID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid ID")
+	}
+
+	existingDB, err := u.stationRepo.FindStationByID(ctx, req.ID)
+	if err != nil {
+		return nil, fmt.Errorf("station not found")
+	}
+
+	existing := mapStationDBToDomain(*existingDB)
+	existing.ID = objectID
+
+	if req.Name != nil {
+		existing.Name = *req.Name
+	}
+	if req.Latitude != nil {
+		existing.Latitude = *req.Latitude
+	}
+	if req.Longitude != nil {
+		existing.Longitude = *req.Longitude
+	}
+	if req.Company != nil {
+		existing.Company = *req.Company
+	}
+	if req.Status != nil {
+		existing.Status = domainModel.StationStatus{
+			OpenHours:  req.Status.OpenHours,
+			CloseHours: req.Status.CloseHours,
+			IsOpen:     req.Status.IsOpen,
+		}
+	}
+	if req.Connectors != nil {
+		existing.Connectors = mapConnectorsReqToDomain(*req.Connectors)
+	}
+
+	if err := u.stationRepo.EditStation(ctx, existing); err != nil {
+		return nil, err
+	}
+
+	updated, err := u.stationRepo.FindStationByID(ctx, req.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := mapStationDBToResponse(*updated)
+	return &resp, nil
 }
 
 func (u *evStationUsecase) RemoveStation(ctx context.Context, request request.RemoveStationRequest) error {
@@ -134,16 +194,9 @@ func (u *evStationUsecase) GetStationByConnectorID(ctx context.Context, request 
 
 func (u *evStationUsecase) SetBooking(ctx context.Context, request request.SetBookingRequest) error {
 	// 📥 ผู้ใช้ส่งคำขอจอง (connector_id + username + booking_end_time)
-
-	// 1️⃣ เช็กว่า booking_end_time > เวลาปัจจุบันไหม
-	// 	❌ ถ้าไม่ → "จองย้อนหลังไม่ได้"
-
-	// 2️⃣ เช็กว่า user คนนี้ เคยจองอื่นไว้ที่ยังไม่หมดเวลาไหม
-	// 	❌ ถ้ามี → "ห้ามจองซ้ำ"
-
-	// 3️⃣ เช็กว่า connector นี้ มีการจองอื่นอยู่ที่ยังไม่หมดเวลาไหม
-	// 	❌ ถ้ามี → "มีคนจองไปแล้ว"
-
+	// 1️⃣ เช็กว่า booking_end_time > เวลาปัจจุบันไหม // 	❌ ถ้าไม่ → "จองย้อนหลังไม่ได้"
+	// 2️⃣ เช็กว่า user คนนี้ เคยจองอื่นไว้ที่ยังไม่หมดเวลาไหม // 	❌ ถ้ามี → "ห้ามจองซ้ำ"
+	// 3️⃣ เช็กว่า connector นี้ มีการจองอื่นอยู่ที่ยังไม่หมดเวลาไหม // 	❌ ถ้ามี → "มีคนจองไปแล้ว"
 	// ✅ ถ้าผ่านทั้ง 3 ข้อ → ทำการจอง
 
 	// Validate booking_end_time format
@@ -273,8 +326,8 @@ func mapStationDBToResponse(station models.EVStationDB) response.EVStationRespon
 	}
 
 	return response.EVStationResponse{
-		ID:        station.ID.Hex(),
-		StationID: station.StationID,
+		ID: station.ID.Hex(),
+		// StationID: station.StationID,
 		Name:      station.Name,
 		Latitude:  station.Latitude,
 		Longitude: station.Longitude,
@@ -286,4 +339,95 @@ func mapStationDBToResponse(station models.EVStationDB) response.EVStationRespon
 		},
 		Connectors: connectors,
 	}
+}
+
+
+// FOR CREATE STATION and EDIT STATION
+func mapStationDBToDomain(db models.EVStationDB) domainModel.EVStation {
+	return domainModel.EVStation{
+		ID:        db.ID,
+		Name:      db.Name,
+		Latitude:  db.Latitude,
+		Longitude: db.Longitude,
+		Company:   db.Company,
+		Status: domainModel.StationStatus{
+			OpenHours:  db.Status.OpenHours,
+			CloseHours: db.Status.CloseHours,
+			IsOpen:     db.Status.IsOpen,
+		},
+		Connectors: mapConnectorsDBToDomain(db.Connectors),
+	}
+}
+
+func mapConnectorsDBToDomain(conns []models.ConnectorDB) []domainModel.Connector {
+	connectors := make([]domainModel.Connector, 0, len(conns))
+	for _, c := range conns {
+		var booking *domainModel.Booking
+		if c.Booking != nil {
+			if parsedTime, err := time.Parse(time.RFC3339, c.Booking.BookingEndTime); err == nil {
+				booking = &domainModel.Booking{
+					Username:       c.Booking.Username,
+					BookingEndTime: parsedTime,
+				}
+			}
+		}
+
+		connectors = append(connectors, domainModel.Connector{
+			ConnectorID:  c.ConnectorID,
+			Type:         c.Type,
+			PlugName:     c.PlugName,
+			PricePerUnit: c.PricePerUnit,
+			PowerOutput:  c.PowerOutput,
+			Booking:      booking,
+		})
+	}
+	return connectors
+}
+
+func mapRequestToDomain(req request.EVStationRequest) domainModel.EVStation {
+	return domainModel.EVStation{
+		// ID: สร้างจากข้างบนหรือ DB
+		Name:      req.Name,
+		Latitude:  req.Latitude,
+		Longitude: req.Longitude,
+		Company:   req.Company,
+		Status: domainModel.StationStatus{
+			OpenHours:  req.Status.OpenHours,
+			CloseHours: req.Status.CloseHours,
+			IsOpen:     req.Status.IsOpen,
+		},
+		Connectors: mapConnectorsReqToDomain(req.Connectors),
+	}
+}
+
+func mapConnectorsReqToDomain(connReqs []request.ConnectorRequest) []domainModel.Connector {
+	connectors := make([]domainModel.Connector, 0, len(connReqs))
+
+	for _, c := range connReqs {
+		var booking *domainModel.Booking
+		if c.Booking != nil {
+			layout := "2006-01-02T15:04:05" // หรือ RFC3339 ตามที่ใช้จริง
+			parsedTime, err := time.Parse(layout, c.Booking.BookingEndTime)
+			if err == nil {
+				booking = &domainModel.Booking{
+					Username:       c.Booking.Username,
+					BookingEndTime: parsedTime,
+				}
+			} else {
+				fmt.Println("Invalid time format for booking:", c.Booking.BookingEndTime)
+				continue
+			}
+		}
+
+		connectors = append(connectors, domainModel.Connector{
+			ConnectorID:  primitive.NewObjectID().Hex(), // ✅ generate ID ที่นี่
+			Type:         c.Type,
+			PlugName:     c.PlugName,
+			PricePerUnit: c.PricePerUnit,
+			PowerOutput:  c.PowerOutput,
+			Booking:      booking,
+		})
+	}
+
+	return connectors
 }

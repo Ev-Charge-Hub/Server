@@ -3,11 +3,12 @@ package models
 import (
 	"Ev-Charge-Hub/Server/internal/constants"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type EVStation struct {
-	ID         string
-	StationID  string
+	ID         primitive.ObjectID
 	Name       string
 	Latitude   float64
 	Longitude  float64
@@ -23,15 +24,15 @@ type StationStatus struct {
 }
 
 type Connector struct {
-	ConnectorID   string
-	Type          constants.ConnectorType
-	PlugName	  constants.PlugName
-	PricePerUnit  float64
-	PowerOutput   int
-	Booking       *Booking
+	ConnectorID  string
+	Type         constants.ConnectorType
+	PlugName     constants.PlugName
+	PricePerUnit float64
+	PowerOutput  int
+	Booking      *Booking
 }
 
 type Booking struct {
 	Username       string
-	BookingEndTime time.Time 
+	BookingEndTime time.Time
 }
