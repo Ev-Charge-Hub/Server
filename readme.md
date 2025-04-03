@@ -76,190 +76,76 @@ Server will start at:
 `http://localhost:8080`
 
 ---
+## 🔐 JWT Authentication
 
-## 📚 **API Endpoints**
+All authenticated routes require a header:
+```
+Authorization: Bearer <your_jwt_token>
+```
+
+---
+
+## 📚 API Endpoints
 
 ### **1. User Management**
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/users/register` | Register a new user |
-| POST | `/users/login` | Login with username/email |
+| Method | Endpoint            | Description              |
+|--------|---------------------|--------------------------|
+| POST   | `/users/register`   | Register a new user      |
+| POST   | `/users/login`      | Login with username/email|
 
 #### 📋 **Register User**
-
 * **URL:** `POST /users/register`
 * **Body:**
-
-  ```
-  {
-    "username": "john_doe",
-    "email": "john@example.com",
-    "password": "secret123",
-    "role": "USER"
-  }
-  ```
+```json
+{
+  "username": "john_doe",
+  "email": "john@example.com",
+  "password": "secret123",
+  "role": "USER"
+}
+```
 * **Response:**
-
-  ```
-  {
-    "message": "User registered successfully"
-  }
-  ```
+```json
+{
+  "message": "User registered successfully"
+}
+```
 
 #### 📋 **Login**
-
 * **URL:** `POST /users/login`
 * **Body:**
-
-  ```
-  {
-    "username_or_email": "john@example.com",
-    "password": "secret123"
-  }
-  ```
+```json
+{
+  "username_or_email": "john@example.com",
+  "password": "secret123"
+}
+```
 * **Response:**
-
-  ```
-  {
-    "token": "your_jwt_token"
-  }
-  ```
+```json
+{
+  "token": "your_jwt_token"
+}
+```
 
 ---
 
 ### **2. EV Station Management**
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/stations` | Get all stations |
-| GET | `/stations/filter` | Filter stations by parameters |
-| GET | `/stations/:id` | Get station by ID |
+| Method | Endpoint              | Description             |
+|--------|-----------------------|-------------------------|
+| GET    | `/stations`           | Get all stations        |
+| GET    | `/stations/filter`    | Filter stations         |
+| GET    | `/stations/:id`       | Get station by ID       |
+| POST   | `/stations/create`    | Create a new station    |
+| PUT    | `/stations/:id`       | Update station info     |
+| DELETE | `/stations/:id`       | Delete station          |
 
 #### 📋 **Get All Stations**
-
 * **URL:** `GET /stations`
 * **Response:**
-
-  ```
-  [
-    {
-      "id": "63f5a01c8f7e3f65b4c9d6b1",
-      "station_id": "ST001",
-      "name": "EV Station Central Plaza",
-      "latitude": 13.7563,
-      "longitude": 100.5018,
-      "company": "EV Company",
-      "status": {
-        "open_hours": "08:00",
-        "close_hours": "20:00",
-        "is_open": true
-      },
-      "connectors": [
-        {
-          "connector_id": "C001",
-          "type": "Type2",
-          "price_per_unit": 3.5,
-          "power_output": 22.0,
-          "is_available": true
-        }
-      ]
-    }
-  ]
-  ```
-
-#### 📋 **Filter Stations**
-
-* **URL:** `GET /stations/filter`
-* **Query Parameters:**
-  * `company`: Filter by company name (option)
-  * `type`: Filter by connector type (option)
-  * `search`: Search by station name (option)
-  * `plug_name`: Filter by plug name (optional)
-  * `status`: Filter by `open` / `closed` status of stations (optional) 
-* Example
-  * `GET /stations/filter?company=Caltex EV&type=AC&search=สถานีชาร์จรถยนต์ไฟฟ้า เซ็นทรัลเวิลด์`
-
-
-* **Response:**
-
-  ```
-  [
-    {
-      "id": "3124AKCac,c9d6b1",
-      "station_id": "ST001",
-      "name": "สถานีชาร์จรถยนต์ไฟฟ้า เซ็นทรัลเวิลด์",
-      "latitude": 13.7563,
-      "longitude": 100.5018,
-      "company": "Caltex EV",
-      "status": {
-        "open_hours": "08:00",
-        "close_hours": "20:00",
-        "is_open": true
-      },
-      "connectors": [
-        {
-          "connector_id": "C001",
-          "type": "AC",
-          "price_per_unit": 3.5,
-          "power_output": 22.0,
-          "is_available": true
-        }
-      ]
-    },
-    {
-      "id": "67a0f307b60606077d9dc993",
-      "station_id": "ST069",
-      "name": "สถานีชาร์จรถยนต์ไฟฟ้า ห้างฉัตร ลำปาง",
-      "latitude": 18.298543,
-      "longitude": 99.30619,
-      "company": "SUSCO EV",
-      "status": {
-          "open_hours": "06:00",
-          "close_hours": "23:00",
-          "is_open": true
-      },
-      "connectors": [
-          {
-              "connector_id": "CT0690",
-              "type": "DC",
-              "price_per_unit": 6.6,
-              "power_output": 100,
-              "is_available": true
-          },
-          {
-              "connector_id": "CT0691",
-              "type": "AC",
-              "price_per_unit": 4.3,
-              "power_output": 22,
-              "is_available": false
-          },
-          {
-              "connector_id": "CT0692",
-              "type": "DC",
-              "price_per_unit": 7.2,
-              "power_output": 150,
-              "is_available": true
-          }
-      ]
-  }
-  ]
-  ```
-
-#### 
-
-#### 📋 **Get Station by ID**
-
-* **URL:** `GET /stations/:id`
-* **Path Parameter:**
-  * `id`: The MongoDB ObjectID of the station
-* Example
-  * `GET /stations/63f5a01c8f7e3f65b4c9d6b1`
-
-
-* **Response:**
-
-```
+```json
+[
   {
     "id": "63f5a01c8f7e3f65b4c9d6b1",
     "station_id": "ST001",
@@ -273,56 +159,354 @@ Server will start at:
       "is_open": true
     },
     "connectors": [
-      {
-        "connector_id": "C001",
-        "type": "Type2",
-        "price_per_unit": 3.5,
-        "power_output": 22.0,
-        "is_available": true
-      }
-    ]
+        {
+          "connector_id": "C001",
+          "type": "Type2",
+          "price_per_unit": 3.5,
+          "power_output": 22.0,
+          "is_available": true
+        }
+      ]
   }
+]
 ```
 
-#### 
+#### 📋 **Filter Stations**
+* **URL:** `GET /stations/filter`
+* **Query Parameters:**
+  - `company` (optional)
+  - `type` (optional)
+  - `search` (optional)
+  - `plug_name` (optional)
+  - `status` (`open` / `closed`, optional)
+* **Response:**
+```json
+[
+  {
+    "id": "63f5a01c8f7e3f65b4c9d6b1",
+    "station_id": "ST001",
+    "name": "EV Station Central Plaza",
+    "latitude": 13.7563,
+    "longitude": 100.5018,
+    "company": "EV Company",
+    "status": {
+      "open_hours": "08:00",
+      "close_hours": "20:00",
+      "is_open": true
+    },
+    "connectors": [
+        {
+          "connector_id": "C001",
+          "type": "Type2",
+          "price_per_unit": 3.5,
+          "power_output": 22.0,
+          "is_available": true
+        }
+      ]
+  }
+]
+```
 
-#### 📋 **SetBooking**
+#### 📋 **Get Station by ID**
+* **URL:** `GET /stations/:id`
+* **Path Parameter:** `id`
+* **Response:** station object 
+```json
+{
+    "id": "67ee5a8fa3c75de5eb49699d",
+    "station_id": "",
+    "name": "Updated EV Station",
+    "latitude": 13.75,
+    "longitude": 100.5,
+    "company": "EV Co Updated",
+    "status": {
+        "open_hours": "07:00",
+        "close_hours": "22:00",
+        "is_open": true
+    },
+    "connectors": [
+        {
+            "connector_id": "67ee5b77a3c75de5eb49699e",
+            "type": "DC_FAST",
+            "plug_name": "CCS",
+            "price_per_unit": 8.5,
+            "power_output": 120
+        },
+        {
+            "connector_id": "67ee5b77a3c75de5eb49699f",
+            "type": "AC_SLOW",
+            "plug_name": "TYPE2",
+            "price_per_unit": 5,
+            "power_output": 22
+        }
+    ]
+}
+```
 
+#### 📋 **Create Station**
+* **URL:** `POST /stations/create`
+* **Body:** full station object
+```json
+{
+    "name": "test_company2_name4",
+    "latitude": 13.304,
+    "longitude": 100.46789,
+    "company": "test_company2",
+    "status": {
+        "open_hours": "06:00",
+        "close_hours": "23:00",
+        "is_open": true
+    },
+    "connectors": [
+        {
+            "type": "DC",
+            "plug_name": "CCS1",
+            "price_per_unit": 7,
+            "power_output": 100
+        }
+    ]
+}
+
+```
+* **Response:** Created station details or success message
+
+#### 📋 **Update Station**
+* **URL:** `PUT /stations/:id`
+* **Body:** full station object
+```json
+{
+  "name": "Updated EV Station",
+  "latitude": 13.7500,
+  "longitude": 100.5000,
+  "company": "EV Co Updated",
+  "status": {
+    "open_hours": "07:00",
+    "close_hours": "22:00",
+    "is_open": true
+  },
+  "connectors": [
+    {
+      "type": "DC_FAST",
+      "plug_name": "CCS",
+      "price_per_unit": 8.5,
+      "power_output": 120
+    },
+    {
+      "type": "AC_SLOW",
+      "plug_name": "TYPE2",
+      "price_per_unit": 5.0,
+      "power_output": 22
+    }
+  ]
+}
+```
+
+* **Response:** Updated info or success message
+```json
+{
+    "message": "Station updated successfully",
+    "station": {
+        "id": "67ee5a8fa3c75de5eb49699d",
+        "station_id": "",
+        "name": "Updated EV Station",
+        "latitude": 13.75,
+        "longitude": 100.5,
+        "company": "EV Co Updated",
+        "status": {
+            "open_hours": "07:00",
+            "close_hours": "22:00",
+            "is_open": true
+        },
+        "connectors": [
+            {
+                "connector_id": "67ee619c6cc170c4890c135e",
+                "type": "DC_FAST",
+                "plug_name": "CCS",
+                "price_per_unit": 8.5,
+                "power_output": 120
+            },
+            {
+                "connector_id": "67ee619c6cc170c4890c135f",
+                "type": "AC_SLOW",
+                "plug_name": "TYPE2",
+                "price_per_unit": 5,
+                "power_output": 22
+            }
+        ]
+    }
+}
+```
+
+#### 📋 **Delete Station**
+* **URL:** `DELETE /stations/:id`
+* **Response:**
+```json
+{
+  "message": "Station deleted successfully",
+  "status": "success"
+}
+```
+
+---
+
+### **3. Booking Management**
+
+| Method | Endpoint                         | Description                   |
+|--------|----------------------------------|-------------------------------|
+| PUT    | `/stations/set-booking`          | Set connector booking         |
+| GET    | `/stations/booking/:username`    | Get booking by username       |
+| GET    | `/stations/bookings/:username`   | Get all bookings for user     |
+
+#### 📋 **Set Booking**
 * **URL:** `PUT /stations/set-booking`
 * **Body:**
+```json
+{
+  "connector_id": "CT0010",
+  "username": "note",
+  "booking_end_time": "2025-04-20T15:00:00"
+}
 ```
+* **Response:**
+```json
+{
+  "message": "Booking successfully added"
+}
+```
+
+#### 📋 **Get Booking by Username**
+* **URL:** `GET /stations/booking/:username`
+* **Response:** booking object
+```json
+{
+  "username": "note",
+  "booking_end_time": "2025-04-20T15:00:00"
+}
+```
+
+#### 📋 **Get All Bookings by User**
+* **URL:** `GET /stations/bookings/:username`
+* **Response:** array of booking object
+```json
+[
   {
-    "connector_id": "CT0010",
     "username": "note",
     "booking_end_time": "2025-04-20T15:00:00"
-}
+  },
+  {
+    "username": "note",
+    "booking_end_time": "2025-05-20T15:00:00"
+  }
+]
 ```
-* Example
-  * `GET /stations/63f5a01c8f7e3f65b4c9d6b1`
 
+---
 
-* **Response:**
+### **4. Connector & User-specific Station API**
 
-```
+| Method | Endpoint                                | Description                          |
+|--------|-----------------------------------------|--------------------------------------|
+| GET    | `/stations/connector/:connector_id`     | Get station by connector ID          |
+| GET    | `/stations/username/:username`          | Get stations by username             |
+
+#### 📋 **Get Station by Connector ID**
+* **URL:** `GET /stations/connector/:connector_id`
+* **Response:** Full station object
+```json
 {
-    "message": "Booking successfully added"
+    "id": "67d7d957014efb03c444443a",
+    "station_id": "ST001",
+    "name": "สถานีชาร์จรถยนต์ไฟฟ้า เซ็นทรัลเวิลด์",
+    "latitude": 13.746879,
+    "longitude": 100.539742,
+    "company": "PTT EV Station",
+    "status": {
+        "open_hours": "00:00",
+        "close_hours": "23:59",
+        "is_open": true
+    },
+    "connectors": [
+        {
+            "connector_id": "CT0010",
+            "type": "DC",
+            "plug_name": "CCS2",
+            "price_per_unit": 6.5,
+            "power_output": 150,
+            "booking": {
+                "username": "note",
+                "booking_end_time": "2025-04-20T15:00:00"
+            }
+        },
+        {
+            "connector_id": "CT0011",
+            "type": "AC",
+            "plug_name": "Type 2",
+            "price_per_unit": 4.5,
+            "power_output": 22,
+            "booking": {
+                "username": "note",
+                "booking_end_time": "2025-05-20T15:00:00"
+            }
+        },
+        {
+            "connector_id": "CT0012",
+            "type": "DC",
+            "plug_name": "CHAdeMO",
+            "price_per_unit": 6.8,
+            "power_output": 100,
+            "booking": {
+                "username": "MichaelBrown",
+                "booking_end_time": "2025-03-17T10:05:08"
+            }
+        }
+    ]
 }
 ```
 
+#### 📋 **Get Stations by Username**
+* **URL:** `GET /stations/username/:username`
+* **Response:** Full station object related to user
+```json
+{
+    "id": "67d7d957014efb03c444443a",
+    "station_id": "ST001",
+    "name": "สถานีชาร์จรถยนต์ไฟฟ้า เซ็นทรัลเวิลด์",
+    "latitude": 13.746879,
+    "longitude": 100.539742,
+    "company": "PTT EV Station",
+    "status": {
+        "open_hours": "00:00",
+        "close_hours": "23:59",
+        "is_open": true
+    },
+    "connectors": [
+        {
+            "connector_id": "CT0010",
+            "type": "DC",
+            "plug_name": "CCS2",
+            "price_per_unit": 6.5,
+            "power_output": 150,
+            "booking": {
+                "username": "note",
+                "booking_end_time": "2025-04-20T15:00:00"
+            }
+        },
+        {
+            "connector_id": "CT0011",
+            "type": "AC",
+            "plug_name": "Type 2",
+            "price_per_unit": 4.5,
+            "power_output": 22,
+            "booking": {
+                "username": "note",
+                "booking_end_time": "2025-05-20T15:00:00"
+            }
+        }
+    ]
+}
 
+```
 
-
----
-
-## 🔐 **JWT Authentication**
-
-The system uses **JWT (JSON Web Token)** for user authentication. When logging in, the server will return a JWT token that must be included in the **Authorization** header of requests that require authentication.
-
-Example:
-
-`Authorization: Bearer <your_jwt_token>`
-
----
 
 ## 🛠 **Utilities**
 
