@@ -81,6 +81,7 @@ Project/
 │   ├── usecase/              # Business logic
 │   ├── domain/               # Models for domain logic
 │   └── dto/                  # DTOs (Data Transfer Objects)
+├-- mock/                     # mock generate data
 ├── middleware                # Middleware layer for verify before use restrict api
 ├── routes/                   # API routes
 ├── utils/                    # Utility functions (JWT, encryption)
@@ -108,9 +109,9 @@ Default connection string:
 
 Create a `.env` file in the project root and specify the following variables:
 
-`MONGO_URI=mongodb://localhost:27017
-DATABASE_NAME=ev_charge_hub
-JWT_SECRET=your_jwt_secret`
+- MONGO_URI=DB_URL
+- JWT_SECRET=JWT_SECRET
+- CLIENT_PORT=PORT_CLIENT
 
 ### **4. Install dependencies**
 
