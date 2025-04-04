@@ -408,7 +408,7 @@ Authorization: Bearer <your_jwt_token>
 
 #### 📋 **Set Booking**
 * **URL:** `PUT /stations/set-booking`
-* **Body:**
+* **Body:** 
 ```json
 {
   "connector_id": "CT0010",
@@ -416,6 +416,12 @@ Authorization: Bearer <your_jwt_token>
   "booking_end_time": "2025-04-20T15:00:00"
 }
 ```
+* **Validation Rules Before Booking:**
+	1. Reject if booking_end_time is in the past or now.
+	2. Reject if user already has an active booking.
+	3. Reject if connector is already booked by someone else.
+	4. If all checks pass, create the booking.
+
 * **Response:**
 ```json
 {
