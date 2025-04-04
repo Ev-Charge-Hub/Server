@@ -606,7 +606,63 @@ Use `/users/login` to receive a token, and `/security/validate-token` to check i
 
 * **Password encryption:** Uses `bcrypt` for hashing passwords before saving to the database.
 * **JWT tokens:** Used for secure user authentication and session management.
+## 🧪 Unit & Integration Test Coverage
 
+### ✅ Unit Tests
+
+- **EV Station Usecase**
+  - ShowAllStations
+  - FilterStations (with valid and invalid status)
+  - GetStationByID (success & not found)
+  - CreateStation
+  - EditStation (with valid and invalid ID)
+  - RemoveStation
+  - SetBooking (past time, duplicated booking, connector already booked, success)
+  - GetBookingByUserName
+  - GetBookingsByUserName
+  - GetStationByConnectorID
+  - GetStationByUserName
+
+- **User Usecase**
+  - RegisterUser (success, invalid input, usecase error)
+  - LoginUser (success, wrong password)
+
+---
+
+### 🔐 Middleware Tests
+
+- AuthMiddleware
+  - No token
+  - Invalid token format
+  - Invalid token
+  - Valid token (success access to protected route)
+
+---
+
+### 🌐 HTTP Handler Tests
+
+- `/stations` Endpoint
+  - GET ShowAllStations
+  - GET FilterStations (valid & error case)
+  - GET GetStationByID
+  - POST CreateStation
+  - PUT EditStation
+  - DELETE RemoveStation
+
+- `/stations/booking`
+  - POST SetBooking (invalid format, usecase error)
+
+- `/register` and `/login`
+  - POST RegisterUser
+  - POST LoginUser
+
+- `/security/validate-token`
+  - ValidateToken (success, missing header, invalid token)
+
+
+> ℹ️ All tests are written using [GoMock](https://github.com/golang/mock), [Gin Test Mode](https://pkg.go.dev/github.com/gin-gonic/gin#section-readme), and [Testify Assertions](https://github.com/stretchr/testify).
+
+---
 ## 🧾 **License**
 
 This project is licensed under the MIT License.
