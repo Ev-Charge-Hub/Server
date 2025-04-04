@@ -124,15 +124,6 @@ Server will start at:
 
 `http://localhost:8080`
 
----
-## 🔐 JWT Authentication
-
-All authenticated routes require a header:
-```
-Authorization: Bearer <your_jwt_token>
-```
-
----
 
 ## 📚 API Endpoints
 
@@ -558,6 +549,55 @@ Authorization: Bearer <your_jwt_token>
             }
         }
     ]
+}
+
+```
+
+---
+
+### **4. Security**
+🔐 JWT Authentication
+---------------------
+
+All authenticated routes require a header:
+
+```
+Authorization: Bearer <your_jwt_token>
+
+```
+
+Use `/users/login` to receive a token, and `/security/validate-token` to check its validity.
+
+| Method | Endpoint                         | Description                   |
+|--------|----------------------------------|-------------------------------|
+| PUT    | `/security/validate-token`      | Validate JWT token         |
+
+
+
+### 📋 Validate Token
+
+-   **URL:** `GET /security/validate-token`
+
+-   **Headers:**
+
+    -   `Authorization: Bearer <your_jwt_token>`
+
+-   **Response (valid token):**
+
+```
+{
+  "valid": true,
+  "role": "USER"
+}
+
+```
+
+-   **Response (invalid token):**
+
+```
+{
+  "valid": false,
+  "role": ""
 }
 
 ```
