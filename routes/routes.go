@@ -29,4 +29,8 @@ func SetupRoutes(router *gin.Engine, userHandler http.UserHandlerInterface, stat
 		stationGroup.GET("/connector/:connector_id", stationHandler.GetStationByConnectorID)
 		stationGroup.GET("/username/:username", stationHandler.GetStationByUserName)
 	}
+	securityGroup := router.Group("/security")
+	{
+		securityGroup.GET("/validate-token", http.TokenValidationHandler)
+	}
 }
