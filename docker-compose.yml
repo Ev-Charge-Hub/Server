@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    image: rew1234/ev-charge-hub-server:V2.0
+    image: rew1234/ev-charge-hub-server:V3.0
     container_name: ev_charge_hub
     restart: always
     env_file:
