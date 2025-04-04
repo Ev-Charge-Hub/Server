@@ -4,29 +4,28 @@ package http
 import (
 	"Ev-Charge-Hub/Server/utils"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
 func TokenValidationHandler(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
-
 	if authHeader == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"valid": false,
-			"error": "Authorization header missing",
-		})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header missing", "valid": false})
 		return
 	}
 
-	tokenString := authHeader[len("Bearer "):]
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header format", "valid": false})
+		return
+	}
 
-	claims, err := utils.ValidateToken(tokenString)
+	token := parts[1]
+	claims, err := utils.ValidateToken(token)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"valid": false,
-			"error": "Invalid token",
-		})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token", "valid": false})
 		return
 	}
 
@@ -35,3 +34,4 @@ func TokenValidationHandler(c *gin.Context) {
 		"role":  claims.Role,
 	})
 }
+
