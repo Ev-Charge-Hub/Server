@@ -556,17 +556,6 @@ Server will start at:
 ---
 
 ### **4. Security**
-🔐 JWT Authentication
----------------------
-
-All authenticated routes require a header:
-
-```
-Authorization: Bearer <your_jwt_token>
-
-```
-
-Use `/users/login` to receive a token, and `/security/validate-token` to check its validity.
 
 | Method | Endpoint                         | Description                   |
 |--------|----------------------------------|-------------------------------|
@@ -601,7 +590,17 @@ Use `/users/login` to receive a token, and `/security/validate-token` to check i
 }
 
 ```
+🔐 JWT Authentication
+---------------------
 
+All authenticated routes require a header:
+
+```
+Authorization: Bearer <your_jwt_token>
+
+```
+
+Use `/users/login` to receive a token, and `/security/validate-token` to check its validity.
 
 ## 🛠 **Utilities**
 
