@@ -193,13 +193,12 @@ func (u *evStationUsecase) GetStationByConnectorID(ctx context.Context, request 
 }
 
 func (u *evStationUsecase) SetBooking(ctx context.Context, request request.SetBookingRequest) error {
-	// 📥 ผู้ใช้ส่งคำขอจอง (connector_id + username + booking_end_time)
-	// 1️⃣ เช็กว่า booking_end_time > เวลาปัจจุบันไหม // 	❌ ถ้าไม่ → "จองย้อนหลังไม่ได้"
-	// 2️⃣ เช็กว่า user คนนี้ เคยจองอื่นไว้ที่ยังไม่หมดเวลาไหม // 	❌ ถ้ามี → "ห้ามจองซ้ำ"
-	// 3️⃣ เช็กว่า connector นี้ มีการจองอื่นอยู่ที่ยังไม่หมดเวลาไหม // 	❌ ถ้ามี → "มีคนจองไปแล้ว"
-	// ✅ ถ้าผ่านทั้ง 3 ข้อ → ทำการจอง
+	// 📥 Condition > (connector_id + username + booking_end_time)
+	// 1. Reject if booking_end_time is in the past or now.
+	// 2. Reject if user already has an active booking.
+	// 3. Reject if connector is already booked by someone else.
+	// 4. If all checks pass, create the booking.
 
-	// Validate booking_end_time format
 	endTime, err := time.Parse("2006-01-02T15:04:05", request.BookingEndTime)
 	if err != nil {
 		return fmt.Errorf("invalid booking_end_time format")
